@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Súmulas COIC — CBIC</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23185FA5'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='14' font-weight='bold'>SC</text></svg>">
+  <style>
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "SF Mono", "Fira Code", monospace;
+      --color-text-primary: #1a1a1a; --color-text-secondary: #555; --color-text-tertiary: #888;
+      --color-text-info: #185FA5; --color-text-success: #16a34a; --color-text-danger: #dc2626; --color-text-warning: #d97706;
+      --color-background-primary: #fff; --color-background-secondary: #f7f7f8;
+      --color-background-info: #eff6ff; --color-background-success: #f0fdf4;
+      --color-background-danger: #fef2f2; --color-background-warning: #fffbeb;
+      --color-border-tertiary: #e5e5e5; --color-border-secondary: #d1d5db;
+      --color-border-info: #93c5fd; --color-border-warning: #fcd34d;
+      --border-radius-md: 8px; --border-radius-lg: 12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-text-primary: #e5e5e5; --color-text-secondary: #a3a3a3; --color-text-tertiary: #737373;
+        --color-text-info: #60a5fa; --color-text-success: #4ade80; --color-text-danger: #f87171; --color-text-warning: #fbbf24;
+        --color-background-primary: #1a1a1a; --color-background-secondary: #262626;
+        --color-background-info: #1e293b; --color-background-success: #14532d20;
+        --color-background-danger: #7f1d1d20; --color-background-warning: #78350f20;
+        --color-border-tertiary: #404040; --color-border-secondary: #525252;
+        --color-border-info: #1d4ed8; --color-border-warning: #92400e;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-sans); color: var(--color-text-primary); background: var(--color-background-secondary); }
+    input, textarea, select { font-family: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); outline: none; }
+    input:focus, textarea:focus, select:focus { border-color: var(--color-text-info); }
+    button { font-family: inherit; font-size: 13px; padding: 8px 16px; border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; }
+    button:hover { background: var(--color-background-secondary); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #root { max-width: 860px; min-height: 100vh; background: var(--color-background-primary); margin: 0 auto; padding: 0 20px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+  <script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const STORAGE_KEY = "coic-gts-v5";
+const SETTINGS_KEY = "coic-ai-settings";
+
+const DEFAULT_GTS = [
+  {
+    id: "cie-coic", nome: "CIE-COIC", descricao: "Comitê de Inteligência Estratégica da COIC",
+    membros: [
+      { id: "m1", nome: "Ilso José de Oliveira", email: "ilso@retcinfraestrutura.com.br", telefone: "", empresa: "COIC", funcao: "Presidente", grupo: "A - CBIC" },
+      { id: "m2", nome: "Hugo França", email: "", telefone: "", empresa: "CBIC", funcao: "Gestor COINFRA", grupo: "A - CBIC" },
+      { id: "m3", nome: "Cláudio Freitas", email: "claudio.freitas@qualidados.com.br", telefone: "", empresa: "Qualidados", funcao: "Sócio Diretor", grupo: "B - Engenharia" },
+      { id: "m4", nome: "Ricardo Fabel", email: "Ricardo.Fabel@k2mais.com.br", telefone: "", empresa: "Tractebel", funcao: "", grupo: "B - Engenharia" },
+      { id: "m5", nome: "Thomas Diepenbruck", email: "Thomas.Diepenbruck@htb.eng.br", telefone: "", empresa: "HTB", funcao: "", grupo: "B - Engenharia" },
+      { id: "m6", nome: "Thereza Cavalcanti", email: "", telefone: "", empresa: "Civil Eng", funcao: "", grupo: "B - Engenharia" },
+      { id: "m7", nome: "Eduardo Aragon", email: "", telefone: "", empresa: "Brainmarket", funcao: "", grupo: "C - Consultoria" },
+      { id: "m8", nome: "Marcelo Figueiredo", email: "", telefone: "", empresa: "MF Eng", funcao: "", grupo: "C - Consultoria" },
+      { id: "m9", nome: "Patrícia Boson", email: "", telefone: "", empresa: "Conciliare", funcao: "", grupo: "C - Consultoria" },
+      { id: "m10", nome: "Eduardo Silvino", email: "", telefone: "", empresa: "Retc", funcao: "", grupo: "C - Consultoria" },
+      { id: "m11", nome: "Gustavo Bado", email: "gustavo.bado@estruturalrs.com.br", telefone: "", empresa: "Estrutural", funcao: "", grupo: "D - Manutenção" },
+      { id: "m12", nome: "Ricardo Abrahão Netto", email: "ricardo@fortes.ind.br", telefone: "", empresa: "Fortes Eng", funcao: "", grupo: "E - Construção Industrial" },
+      { id: "m13", nome: "Edmilson Pires", email: "", telefone: "", empresa: "Marka", funcao: "", grupo: "E - Construção Industrial" },
+      { id: "m14", nome: "Geraldo Menezes", email: "", telefone: "", empresa: "IBPC", funcao: "", grupo: "E - Construção Industrial" },
+      { id: "m15", nome: "Elissandra Silva", email: "", telefone: "", empresa: "KVG", funcao: "", grupo: "E - Construção Industrial" },
+      { id: "m16", nome: "Celso Pimentel", email: "celso.pimentel@mip.com.br", telefone: "", empresa: "MIP Eng", funcao: "", grupo: "F - Montagem" },
+      { id: "m17", nome: "Cézar Mortari", email: "", telefone: "", empresa: "Irontec", funcao: "", grupo: "F - Montagem" },
+      { id: "m18", nome: "Fernando Lima", email: "fernando.lima@montisol.com.br", telefone: "", empresa: "Montisol", funcao: "", grupo: "F - Montagem" },
+      { id: "m19", nome: "Leonardo Scarpelli", email: "", telefone: "", empresa: "FDC", funcao: "", grupo: "G - Instituições" },
+      { id: "m20", nome: "Rodrigo Koerich", email: "", telefone: "", empresa: "BIM Fórum Brasil", funcao: "", grupo: "G - Instituições" },
+      { id: "m21", nome: "Oscar Simonsen", email: "", telefone: "", empresa: "ABEMI", funcao: "", grupo: "G - Instituições" },
+    ],
+  },
+];
+
+const AI_PROVIDERS = [
+  { id: "anthropic", name: "Claude (Anthropic)", models: ["claude-sonnet-4-20250514", "claude-opus-4-20250514"], endpoint: "https://api.anthropic.com/v1/messages" },
+  { id: "openai", name: "ChatGPT (OpenAI)", models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"], endpoint: "https://api.openai.com/v1/chat/completions" },
+  { id: "google", name: "Gemini (Google)", models: ["gemini-2.0-flash", "gemini-1.5-pro"], endpoint: "https://generativelanguage.googleapis.com/v1beta" },
+];
+
+const DEFAULT_INSTRUCTIONS = `Você é Alexandre Nícolas Dantas dos Santos, Gestor de Projetos da COIC/CBIC. Sua tarefa é transformar transcrições de reuniões em súmulas institucionais profissionais.
+
+ESTRUTURA OBRIGATÓRIA DA SÚMULA (siga rigorosamente):
+
+1. INFORMES (parágrafo de abertura):
+Escreva um parágrafo denso e formal informando: o número da reunião por extenso (ex: "A quinquagésima sexta reunião ordinária"), o nome completo do comitê/GT ("Comitê de Inteligência Estratégica (CIE) da Comissão de Obras Industriais e Corporativas (COIC) da Câmara Brasileira da Indústria da Construção (CBIC)"), formato (virtual/presencial/híbrido), data por extenso com dia da semana, horário de início e término, número de presentes por extenso (ex: "15 (quinze) participantes"), número de ausências por extenso, total de membros ativos, e finalize com "Foram pautas da reunião os seguintes temas:".
+
+2. QUADRO DE PAUTAS:
+Liste cada pauta com horário e apresentador, no formato:
+"16h00 – 16h05 | Abertura e Boas-Vindas
+Apresentação de Sr. [Nome]"
+
+3. SEÇÕES DE CADA PAUTA (título em CAIXA ALTA E NEGRITO):
+Cada seção deve ter bullet points (-) com parágrafos longos e detalhados no estilo institucional. Cada bullet deve conter 2-4 frases elaboradas. Use linguagem formal na terceira pessoa com verbos como:
+- "foi apresentado/a", "foi informado", "foi destacado", "foi ressaltado"
+- "foram discutidos", "foram apresentados os principais marcos"
+- "Na sequência, ...", "Sobre o tema, ...", "Diante desse cenário, ..."
+- "Entre os principais pontos mencionados, destacaram-se:"
+- Sub-bullets com hífen e recuo para listas dentro de uma pauta.
+
+4. PALAVRA ABERTA E ENCERRAMENTO (última seção obrigatória):
+"Não havendo outras manifestações relevantes por parte dos participantes, foi reafirmada a importância de [tema principal]. A reunião foi encerrada em seguida, com [orientação final]."
+
+ESTILO DE ESCRITA — REGRAS ABSOLUTAS:
+- Sempre terceira pessoa, voz passiva predominante
+- Linguagem institucional, formal, sem coloquialismo
+- Parágrafos longos e bem articulados (nunca frases curtas soltas)
+- Números por extenso entre parênteses: "15 (quinze)"
+- Datas por extenso: "25 de fevereiro de 2026, uma quarta-feira"
+- Referir-se a pessoas como "Sr." ou "Sra." seguido do nome
+- Nunca usar "eu", "nós", "a gente"
+- Conectivos formais: "ademais", "no âmbito de", "no tocante a", "em consonância com"
+- Cada pauta deve ter pelo menos 2 bullet points com conteúdo substancial`;
+
+const uid = () => "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const norm = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+function cleanTeamsName(raw) {
+  let s = raw;
+  s = s.replace(/\s*\([^)]*\)\s*/g, " ");
+  s = s.replace(/^[A-Z]{2,10}\s*-\s*/i, "");
+  s = s.replace(/\s*\|[^|]*$/g, "");
+  s = s.replace(/\s+-\s+[A-Z][A-Z\-]+\s*$/g, "");
+  s = s.replace(/\s+(SME|SINDUSCON[\w-]*)\s*$/gi, "");
+  return s.trim();
+}
+
+function nameTokens(s) { return norm(s).split(/[\s\-\.]+/).filter((t) => t.length > 1 && !["de", "da", "do", "dos", "das", "e"].includes(t)); }
+function tokenOverlap(a, b) { let h = 0; for (const x of a) for (const y of b) { if (x === y || (x.length > 3 && y.length > 3 && (x.includes(y) || y.includes(x)))) { h++; break; } } return h; }
+
+function matchTeamsCSV(rows, membros) {
+  const pm = {}; const matched = new Set(); membros.forEach((m) => (pm[m.id] = false));
+  for (const row of rows) { if (!row.email) continue; const e = row.email.toLowerCase().trim(); for (const m of membros) { if (matched.has(m.id)) continue; if (m.email && m.email.toLowerCase().trim() === e) { pm[m.id] = true; matched.add(m.id); row._m = true; break; } } }
+  for (const row of rows) {
+    if (row._m) continue; const c = cleanTeamsName(row.name); const rt = nameTokens(c); if (!rt.length) continue;
+    let best = null, bs = 0;
+    for (const m of membros) {
+      if (matched.has(m.id)) continue; const mt = nameTokens(m.nome); if (!mt.length) continue;
+      const ov = tokenOverlap(rt, mt); const sc = ov / Math.min(rt.length, mt.length);
+      const fn = mt[0] && rt[0] && (mt[0] === rt[0] || mt[0].includes(rt[0]) || rt[0].includes(mt[0]));
+      const cf = norm(row.name); const em = m.empresa && norm(m.empresa).split(/\s+/).some((e) => e.length > 2 && cf.includes(e));
+      if (ov >= 2 || (sc >= 0.8 && ov >= 1)) { if (sc > bs) { bs = sc; best = m; } }
+      else if (ov === 1 && em && fn) { if (0.7 > bs) { bs = 0.7; best = m; } }
+      else if (fn && em && mt.length <= 2) { if (0.65 > bs) { bs = 0.65; best = m; } }
+    }
+    if (best) { pm[best.id] = true; matched.add(best.id); row._m = true; }
+  }
+  const seen = new Set(); const un = []; const bot = /fireflies|read\.ai|notetaker|bot/i;
+  for (const r of rows) { if (r._m) continue; const c = cleanTeamsName(r.name); if (!c || c.length < 2 || bot.test(r.name)) continue; const k = norm(c); if (seen.has(k)) continue; seen.add(k); un.push({ name: c, email: r.email || "" }); }
+  return { pm, un };
+}
+
+function parseTeamsCSV(text) {
+  const lines = text.split(/\r?\n/); const rows = []; let inP = false, hdr = false, nc = 0, ec = -1;
+  for (const line of lines) {
+    const cols = line.split("\t");
+    if (!inP) { if (/participantes/i.test(cols[0])) { inP = true; continue; } if (/^nome$/i.test(cols[0]?.trim())) { inP = true; hdr = true; nc = 0; ec = cols.findIndex((c) => /email/i.test(c)); continue; } }
+    else if (!hdr) { if (/^nome$/i.test(cols[0]?.trim())) { hdr = true; nc = 0; ec = cols.findIndex((c) => /email/i.test(c)); continue; } }
+    else { const n = cols[nc]?.trim(); if (n && n.length > 1) rows.push({ name: n, email: ec >= 0 ? cols[ec]?.trim() || "" : "" }); }
+  }
+  if (!rows.length) for (const l of lines) { const c = l.split(/[,;\t]/); const n = c[0]?.replace(/"/g, "").trim(); if (n && n.length > 2 && !/^(nome|name|titulo|participantes)/i.test(n)) rows.push({ name: n, email: "" }); }
+  const dd = new Map(); for (const r of rows) { const k = norm(r.name); if (!dd.has(k)) dd.set(k, r); else if (r.email && !dd.get(k).email) dd.get(k).email = r.email; }
+  return [...dd.values()];
+}
+
+function calcQ(p, m) { const t = m.length; const pr = Object.values(p).filter(Boolean).length; return { total: t, pres: pr, aus: t - pr, pct: t > 0 ? Math.round((pr / t) * 1000) / 10 : 0, ok: pr > t / 2 }; }
+
+const Check = ({ checked, size = 22 }) => (
+  <div style={{ width: size, height: size, borderRadius: 6, flexShrink: 0, background: checked ? "#16a34a" : "transparent", border: checked ? "2px solid #16a34a" : "2px solid var(--color-border-secondary)", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.12s", boxShadow: checked ? "0 0 0 2px rgba(22,163,74,0.15)" : "none" }}>
+    {checked && <svg width={size - 8} height={size - 8} viewBox="0 0 16 16" fill="none"><path d="M2.5 8.5L6 12L13.5 4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+  </div>
+);
+
+const Ic = ({ d, size = 18, color = "currentColor", style: s }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={s}><path d={d} /></svg>
+);
+const ic = { plus: "M12 5v14M5 12h14", x: "M18 6L6 18M6 6l12 12", upload: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12", users: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", clipboard: "M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M9 2h6v4H9z", send: "M22 2L11 13M22 2l-7 20-4-9-9-4z", download: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3", chevR: "M9 18l6-6-6-6", chevL: "M15 18l-6-6 6-6", edit: "M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z", save: "M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8", alert: "M12 9v4M12 17h.01M10.29 3.86l-8.6 14.86A2 2 0 003.4 22h17.2a2 2 0 001.71-3.28l-8.6-14.86a2 2 0 00-3.42 0z", loader: "M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4", check: "M20 6L9 17l-5-5", gear: "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z", eye: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z" };
+const lbl = { fontSize: 12, color: "var(--color-text-secondary)", display: "block", marginBottom: 4 };
+const tabLabels = ["Configurar", "Presença", "Transcrição", "Revisão", "Exportar"];
+
+function MembroForm({ data, onChange, onSave, onCancel, title, saveLabel }) {
+  return (
+    <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-info)", borderRadius: "var(--border-radius-lg)", padding: 16, marginBottom: 14 }}>
+      <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 12 }}>{title}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div style={{ gridColumn: "1/-1" }}><label style={lbl}>Nome completo *</label><input value={data.nome} onChange={(e) => onChange({ ...data, nome: e.target.value })} style={{ width: "100%", boxSizing: "border-box" }} /></div>
+        <div><label style={lbl}>E-mail</label><input value={data.email} onChange={(e) => onChange({ ...data, email: e.target.value })} style={{ width: "100%", boxSizing: "border-box" }} /></div>
+        <div><label style={lbl}>Telefone</label><input value={data.telefone} onChange={(e) => onChange({ ...data, telefone: e.target.value })} style={{ width: "100%", boxSizing: "border-box" }} /></div>
+        <div><label style={lbl}>Empresa</label><input value={data.empresa} onChange={(e) => onChange({ ...data, empresa: e.target.value })} style={{ width: "100%", boxSizing: "border-box" }} /></div>
+        <div><label style={lbl}>Função</label><input value={data.funcao} onChange={(e) => onChange({ ...data, funcao: e.target.value })} style={{ width: "100%", boxSizing: "border-box" }} /></div>
+        <div><label style={lbl}>Grupo</label><input value={data.grupo || ""} onChange={(e) => onChange({ ...data, grupo: e.target.value })} style={{ width: "100%", boxSizing: "border-box" }} /></div>
+      </div>
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 12 }}>
+        <button onClick={onCancel}>Cancelar</button>
+        <button onClick={onSave} disabled={!data.nome?.trim()} style={{ opacity: data.nome?.trim() ? 1 : 0.5 }}>{saveLabel || "Salvar"}</button>
+      </div>
+    </div>
+  );
+}
+
+// ── AI Call Abstraction ──
+async function callAI(settings, messages) {
+  const { provider, model, apiKey } = settings;
+  if (provider === "openai") {
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages: messages.map((m) => ({ role: m.role, content: typeof m.content === "string" ? m.content : m.content })), max_tokens: 4000 }),
+    });
+    const d = await resp.json(); return d.choices?.[0]?.message?.content || "";
+  } else if (provider === "google") {
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: typeof m.content === "string" ? m.content : JSON.stringify(m.content) }] })) }),
+    });
+    const d = await resp.json(); return d.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  } else {
+    // Anthropic (default, works without key in claude.ai artifacts)
+    const headers = { "Content-Type": "application/json" };
+    if (apiKey) headers["x-api-key"] = apiKey;
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers,
+      body: JSON.stringify({ model: model || "claude-sonnet-4-20250514", max_tokens: 4000, messages }),
+    });
+    const d = await resp.json(); return d.content?.map((i) => i.text || "").join("") || "";
+  }
+}
+
+// ═══════════════ MAIN APP ═══════════════
+
+function SumulasApp() {
+  const [gts, setGts] = useState([]); const [loaded, setLoaded] = useState(false);
+  const [selGtId, setSelGtId] = useState(null); const [tab, setTab] = useState(0);
+  const [reuniao, setReuniao] = useState({ nome: "", edicao: "", data: new Date().toISOString().split("T")[0], horario: "16h30 às 18h00", local: "Microsoft Teams", pauta_texto: "" });
+  const [presencas, setPresencas] = useState({}); const [unmatched, setUnmatched] = useState([]); const [matchLog, setMatchLog] = useState("");
+  const [formMode, setFormMode] = useState(null); const [formData, setFormData] = useState({ nome: "", email: "", telefone: "", empresa: "", funcao: "", grupo: "" });
+  const [transcricao, setTranscricao] = useState(""); const [transFile, setTransFile] = useState(null);
+  const [sumula, setSumula] = useState(null); const [loading, setLoading] = useState(false); const [error, setError] = useState("");
+  const [showNewGt, setShowNewGt] = useState(false); const [newGt, setNewGt] = useState({ nome: "", descricao: "" });
+  const [copied, setCopied] = useState(false); const [showSettings, setShowSettings] = useState(false);
+  const [aiSettings, setAiSettings] = useState({ provider: "anthropic", model: "claude-sonnet-4-20250514", apiKey: "", instructions: DEFAULT_INSTRUCTIONS });
+  const [showApiKey, setShowApiKey] = useState(false);
+  const excelRef = useRef(null); const docRef = useRef(null);
+
+  useEffect(() => { (async () => {
+    try { const r = await fetch('/api/gts'); const data = await r.json(); if (Array.isArray(data) && data.length) { setGts(data.map(g => ({ ...g, membros: [] }))); setLoaded(true); return; } } catch {}
+    // Fallback: localStorage
+    try { const r = localStorage.getItem(STORAGE_KEY); if (r) { const p = JSON.parse(r); if (Array.isArray(p) && p.length) { setGts(p); setLoaded(true); return; } } } catch {}
+    setGts(DEFAULT_GTS); setLoaded(true);
+  })(); }, []);
+  useEffect(() => { (async () => {
+    try { const r = await fetch('/api/settings'); const s = await r.json(); if (s && Object.keys(s).length) setAiSettings((prev) => ({ ...prev, ...s })); } catch {}
+    try { const r = localStorage.getItem(SETTINGS_KEY); if (r) { const s = JSON.parse(r); setAiSettings((prev) => ({ ...prev, ...s })); } } catch {}
+  })(); }, []);
+  useEffect(() => { if (loaded) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(gts)); } catch {} } }, [gts, loaded]);
+  const saveAiSettings = async (s) => { setAiSettings(s); try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(s) }); } catch {} };
+
+  const gt = gts.find((g) => g.id === selGtId); const membros = gt?.membros || [];
+  useEffect(() => { if (!selGtId) return; (async () => { try { const r = await fetch(`/api/gts/${selGtId}/membros`); const membrosApi = await r.json(); if (Array.isArray(membrosApi) && membrosApi.length) { setGts(prev => prev.map(g => g.id === selGtId ? { ...g, membros: membrosApi } : g)); } } catch {} const g = gts.find(x => x.id === selGtId); if (g?.membros) { const p = {}; g.membros.forEach((m) => (p[m.id] = false)); setPresencas(p); } setUnmatched([]); setTranscricao(""); setTransFile(null); setSumula(null); setTab(0); setFormMode(null); setMatchLog(""); })(); }, [selGtId]);
+  const saveGt = (u) => setGts((prev) => prev.map((g) => (g.id === u.id ? u : g)));
+  const addMembro = (data, unmIdx) => { if (!gt) return; const n = { id: uid(), ...data }; saveGt({ ...gt, membros: [...gt.membros, n] }); setPresencas((p) => ({ ...p, [n.id]: true })); if (unmIdx !== undefined) setUnmatched((p) => p.filter((_, i) => i !== unmIdx)); setFormMode(null); };
+  const updateMembro = (id, data) => { if (!gt) return; saveGt({ ...gt, membros: gt.membros.map((m) => (m.id === id ? { ...m, ...data } : m)) }); setFormMode(null); };
+
+  const handleExcel = async (e) => {
+    const file = e.target.files[0]; if (!file) return; setError("");
+    try {
+      const buf = await file.arrayBuffer(); const bytes = new Uint8Array(buf);
+      const isU16 = (bytes[0] === 0xFF && bytes[1] === 0xFE) || (bytes[0] === 0xFE && bytes[1] === 0xFF);
+      if (file.name.match(/\.csv$|\.txt$/i)) {
+        const text = new TextDecoder(isU16 ? "utf-16le" : "utf-8").decode(buf);
+        const rows = parseTeamsCSV(text); const { pm, un } = matchTeamsCSV(rows, membros);
+        setPresencas(pm); setUnmatched(un);
+        setMatchLog(`${rows.length} participantes → ${Object.values(pm).filter(Boolean).length} identificados, ${un.length} não identificados`);
+      } else {
+        const XLSX = await import("https://cdn.jsdelivr.net/npm/xlsx@0.20.3/+esm");
+        const wb = XLSX.read(buf, { type: "array" }); const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+        const names = []; rows.forEach((r) => { if (Array.isArray(r)) r.forEach((c) => { if (typeof c === "string" && c.trim().length > 2 && !/^(nome|name|email|telefone)/i.test(c.trim())) names.push({ name: c.trim(), email: "" }); }); });
+        const { pm, un } = matchTeamsCSV(names, membros); setPresencas(pm); setUnmatched(un);
+      }
+    } catch (err) { setError("Erro ao ler arquivo: " + err.message); }
+    e.target.value = "";
+  };
+
+  const handleDoc = async (e) => {
+    const file = e.target.files[0]; if (!file) return; setError(""); setTransFile(file); setLoading(true);
+    try {
+      const buf = await file.arrayBuffer();
+      if (file.name.match(/\.docx$/i)) {
+        const result = await mammoth.extractRawText({ arrayBuffer: buf });
+        if (result.value?.trim()) { setTranscricao(result.value); setLoading(false); return; }
+      }
+      if (file.name.match(/\.txt$/i)) {
+        const text = new TextDecoder("utf-8").decode(buf);
+        if (text.trim()) { setTranscricao(text); setLoading(false); return; }
+      }
+      // .pdf: use AI API
+      const b64 = btoa(new Uint8Array(buf).reduce((d, b) => d + String.fromCharCode(b), ""));
+      const txt = await callAI(aiSettings, [{ role: "user", content: [
+        { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } },
+        { type: "text", text: "Extraia o conteúdo completo deste documento mantendo a estrutura original. Retorne apenas o texto extraído." },
+      ] }]);
+      if (txt.trim()) setTranscricao(txt); else setError("Não foi possível extrair texto. Tente colar manualmente.");
+    } catch (err) { setError("Erro ao processar arquivo: " + err.message); }
+    finally { setLoading(false); e.target.value = ""; }
+  };
+
+  const processar = async () => {
+    if (!transcricao.trim()) { setError("Adicione a transcrição primeiro."); return; }
+    setLoading(true); setError("");
+    try {
+      const pr = membros.filter((m) => presencas[m.id]); const au = membros.filter((m) => !presencas[m.id]); const qr = calcQ(presencas, membros);
+      const sysInstructions = aiSettings.instructions || DEFAULT_INSTRUCTIONS;
+      const prompt = `${sysInstructions}
+
+DADOS DA REUNIÃO:
+- Nome: ${reuniao.nome || "Reunião do " + (gt?.nome || "GT")}
+- Edição: ${reuniao.edicao}
+- Data: ${reuniao.data} | Horário: ${reuniao.horario} | Local: ${reuniao.local}
+- GT/Comissão: ${gt?.nome || ""}
+- Presentes (${pr.length}): ${pr.map((m) => `${m.nome} (${m.empresa}${m.funcao ? " - " + m.funcao : ""})`).join(", ")}
+- Ausentes (${au.length}): ${au.map((m) => `${m.nome} (${m.empresa})`).join(", ")}
+- Quórum: ${qr.pres}/${qr.total} (${qr.pct}%) — ${qr.ok ? "ATINGIDO" : "NÃO ATINGIDO"}
+${reuniao.pauta_texto ? "\nPAUTA PRÉ-DEFINIDA:\n" + reuniao.pauta_texto : ""}
+
+TRANSCRIÇÃO:
+${transcricao.substring(0, 15000)}
+
+Responda SOMENTE em JSON puro (sem markdown, sem backticks). Use esta estrutura:
+{"informes":"Parágrafo de abertura longo e formal conforme instruções acima","quadro_pautas":[{"horario":"16h00 – 16h05","titulo":"Abertura e Boas-Vindas","apresentador":"Sr. Ilso Oliveira"}],"secoes":[{"titulo":"ABERTURA E BOAS-VINDAS","bullets":["- Bullet point longo e detalhado com 2-4 frases no estilo institucional.","- Segundo bullet com conteúdo substancial.",">> Sub-bullet com circunferência vazia para listas internas."]}],"encerramento":"Texto da seção Palavra Aberta e Encerramento","proxima_reuniao":"Data se mencionada"}`;
+      const txt = await callAI(aiSettings, [{ role: "user", content: prompt }]);
+      setSumula(JSON.parse(txt.replace(/```json|```/g, "").trim()));
+      setTab(3);
+    } catch (err) { setError("Erro: " + err.message); }
+    finally { setLoading(false); }
+  };
+
+  const qr = calcQ(presencas, membros); const presentes = membros.filter((m) => presencas[m.id]); const ausentes = membros.filter((m) => !presencas[m.id]);
+
+  const exportarTexto = () => {
+    if (!sumula) return "";
+    const nomeR = reuniao.nome || "Reunião do " + (gt?.nome || "GT");
+    let t = "";
+    t += `Data e hora: ${reuniao.data} | ${reuniao.horario}\n`;
+    t += `Local: ${reuniao.local}\n`;
+    t += `Participantes: Presidente da COIC/CBIC, membros do ${gt?.nome || "GT"} e Gestor de Projetos da COIC/CBIC.\n`;
+    t += `Áreas: COIC – Comissão de Obras Industriais e Corporativas\n`;
+    t += `Objetivo: ${reuniao.edicao ? reuniao.edicao + " — " : ""}${nomeR}\n`;
+    t += `\n${"═".repeat(56)}\n\nINFORMES\n\n${sumula.informes}\n\n`;
+    // Quadro de pautas
+    t += `${"─".repeat(56)}\n`;
+    t += `PAUTA DA ${(reuniao.edicao || "").toUpperCase()} ${nomeR.toUpperCase()}\n`;
+    t += `${"─".repeat(56)}\n`;
+    sumula.quadro_pautas?.forEach((p) => { t += `${p.horario} | ${p.titulo}\nApresentação de ${p.apresentador}\n\n`; });
+    t += `${"─".repeat(56)}\n\n`;
+    // Seções
+    sumula.secoes?.forEach((s) => {
+      t += `${s.titulo}\n\n`;
+      s.bullets?.forEach((b) => { t += `  • ${b}\n\n`; });
+    });
+    // Encerramento
+    if (sumula.encerramento) t += `\n${sumula.encerramento}\n\n`;
+    // Quórum
+    t += `${"─".repeat(56)}\nQUÓRUM\n\n`;
+    t += `${"Nome".padEnd(30)}${"Empresa".padEnd(20)}Presença\n`;
+    t += `${"─".repeat(56)}\n`;
+    membros.forEach((m) => { t += `${m.nome.padEnd(30)}${m.empresa.padEnd(20)}${presencas[m.id] ? "✓ Presente" : "— Ausente"}\n`; });
+    t += `\nTotal: ${qr.pres}/${qr.total} (${qr.pct}%)\n\n`;
+    t += `${"─".repeat(56)}\n`;
+    t += `As contribuições e retificações a esta súmula devem ser enviadas para coic@cbic.org.br, preferencialmente, em até 48 horas após o seu recebimento. A não manifestação implica na aceitação da Súmula.\n\n`;
+    t += `Súmula elaborada por:\nAlexandre Nícolas Dantas dos Santos\nGestor de Projetos da COIC\n`;
+    if (sumula.proxima_reuniao) t += `\nPróxima reunião: ${sumula.proxima_reuniao}\n`;
+    return t;
+  };
+
+  // ═══ SETTINGS PANEL ═══
+  if (showSettings) {
+    const prov = AI_PROVIDERS.find((p) => p.id === aiSettings.provider);
+    return (
+      <div style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)", maxWidth: 640, margin: "0 auto", padding: "2rem 0" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "1.5rem" }}>
+          <button onClick={() => setShowSettings(false)} style={{ border: "none", background: "none", padding: 4, cursor: "pointer", color: "var(--color-text-secondary)" }}><Ic d={ic.chevL} size={20} /></button>
+          <h1 style={{ fontSize: 20, fontWeight: 500, margin: 0 }}>Configurações da IA</h1>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
+            <label style={lbl}>Provedor de IA</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              {AI_PROVIDERS.map((p) => (
+                <button key={p.id} onClick={() => saveAiSettings({ ...aiSettings, provider: p.id, model: p.models[0] })}
+                  style={{ flex: 1, padding: "10px 8px", fontSize: 13, borderRadius: "var(--border-radius-md)", border: aiSettings.provider === p.id ? "2px solid var(--color-text-info)" : "0.5px solid var(--color-border-tertiary)", background: aiSettings.provider === p.id ? "var(--color-background-info)" : "var(--color-background-primary)", fontWeight: aiSettings.provider === p.id ? 500 : 400, cursor: "pointer" }}>
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label style={lbl}>Modelo</label>
+            <select value={aiSettings.model} onChange={(e) => saveAiSettings({ ...aiSettings, model: e.target.value })} style={{ width: "100%", boxSizing: "border-box" }}>
+              {prov?.models.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={lbl}>Chave da API {aiSettings.provider === "anthropic" && <span style={{ color: "var(--color-text-tertiary)" }}>(opcional no claude.ai)</span>}</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input type={showApiKey ? "text" : "password"} value={aiSettings.apiKey} onChange={(e) => saveAiSettings({ ...aiSettings, apiKey: e.target.value })} placeholder={aiSettings.provider === "anthropic" ? "Deixe vazio para usar dentro do claude.ai" : "sk-..."} style={{ flex: 1, boxSizing: "border-box" }} />
+              <button onClick={() => setShowApiKey(!showApiKey)} style={{ padding: "0 10px" }}><Ic d={ic.eye} size={16} /></button>
+            </div>
+          </div>
+          <div>
+            <label style={lbl}>Instruções para a IA (como ela deve gerar a súmula)</label>
+            <textarea value={aiSettings.instructions} onChange={(e) => saveAiSettings({ ...aiSettings, instructions: e.target.value })} rows={14} style={{ width: "100%", boxSizing: "border-box", fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.6 }} />
+            <button onClick={() => saveAiSettings({ ...aiSettings, instructions: DEFAULT_INSTRUCTIONS })} style={{ fontSize: 11, marginTop: 6, color: "var(--color-text-tertiary)" }}>Restaurar instruções padrão</button>
+          </div>
+        </div>
+        <div style={{ marginTop: 20, padding: "12px 16px", borderRadius: "var(--border-radius-md)", background: "var(--color-background-info)", fontSize: 12, color: "var(--color-text-info)" }}>
+          As configurações são salvas automaticamente e persistem entre sessões.
+        </div>
+      </div>
+    );
+  }
+
+  // ═══ GT SELECTOR ═══
+  if (!selGtId) {
+    return (
+      <div style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)", maxWidth: 640, margin: "0 auto", padding: "2rem 0" }}>
+        <div style={{ marginBottom: "2rem", textAlign: "center" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+            <button onClick={() => setShowSettings(true)} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "var(--color-text-secondary)" }}>
+              <Ic d={ic.gear} size={16} /> Configurar IA
+            </button>
+          </div>
+          <div style={{ width: 56, height: 56, borderRadius: "var(--border-radius-lg)", background: "linear-gradient(135deg, #185FA5 0%, #0F6E56 100%)", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+            <span style={{ fontWeight: 500, fontSize: 20, color: "#fff", letterSpacing: "-0.02em" }}>SC</span>
+          </div>
+          <h1 style={{ fontSize: 22, fontWeight: 500, margin: "0 0 4px" }}>Súmulas COIC</h1>
+          <p style={{ fontSize: 14, color: "var(--color-text-secondary)", margin: 0 }}>Gerador inteligente de súmulas — CBIC</p>
+          {aiSettings.provider !== "anthropic" && (
+            <div style={{ fontSize: 11, color: "var(--color-text-info)", marginTop: 6 }}>IA: {AI_PROVIDERS.find((p) => p.id === aiSettings.provider)?.name} ({aiSettings.model})</div>
+          )}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+          {gts.map((g) => (
+            <div key={g.id} onClick={() => setSelGtId(g.id)}
+              style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-lg)", cursor: "pointer", transition: "border-color 0.15s" }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--color-border-secondary)")} onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--color-border-tertiary)")}>
+              <div style={{ width: 40, height: 40, borderRadius: "var(--border-radius-md)", background: "var(--color-background-secondary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Ic d={ic.users} size={18} color="var(--color-text-secondary)" /></div>
+              <div style={{ flex: 1 }}><div style={{ fontSize: 15, fontWeight: 500 }}>{g.nome}</div><div style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>{g.descricao ? g.descricao + " · " : ""}{g.membros.length} membros</div></div>
+              <Ic d={ic.chevR} size={18} color="var(--color-text-tertiary)" />
+            </div>
+          ))}
+        </div>
+        {!showNewGt ? (
+          <button onClick={() => setShowNewGt(true)} style={{ width: "100%", padding: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, borderStyle: "dashed" }}><Ic d={ic.plus} size={16} /> Novo grupo de trabalho</button>
+        ) : (
+          <div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-lg)", padding: 16 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div><label style={lbl}>Nome</label><input value={newGt.nome} onChange={(e) => setNewGt({ ...newGt, nome: e.target.value })} placeholder="Ex: GT de Valorização da Engenharia" style={{ width: "100%", boxSizing: "border-box" }} /></div>
+              <div><label style={lbl}>Descrição</label><input value={newGt.descricao} onChange={(e) => setNewGt({ ...newGt, descricao: e.target.value })} style={{ width: "100%", boxSizing: "border-box" }} /></div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                <button onClick={() => setShowNewGt(false)}>Cancelar</button>
+                <button onClick={() => { if (!newGt.nome.trim()) return; const g = { id: "gt-" + Date.now().toString(36), nome: newGt.nome.trim(), descricao: newGt.descricao.trim(), membros: [] }; setGts((p) => [...p, g]); setSelGtId(g.id); setShowNewGt(false); setNewGt({ nome: "", descricao: "" }); }}>Criar</button>
+              </div>
+            </div>
+          </div>
+        )}
+        <div style={{ marginTop: "2rem", fontSize: 11, color: "var(--color-text-tertiary)", textAlign: "center" }}>Gestor de Projetos COIC — coic@cbic.org.br</div>
+      </div>
+    );
+  }
+
+  // ═══ MAIN VIEW ═══
+  const grupos = [...new Set(membros.map((m) => m.grupo || "Sem grupo"))].sort();
+  return (
+    <div style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)", maxWidth: 780, margin: "0 auto", padding: "1rem 0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: "1.25rem" }}>
+        <button onClick={() => setSelGtId(null)} style={{ border: "none", background: "none", padding: 4, cursor: "pointer", color: "var(--color-text-secondary)" }}><Ic d={ic.chevL} size={20} /></button>
+        <div style={{ flex: 1 }}><h1 style={{ fontSize: 18, fontWeight: 500, margin: 0 }}>{gt?.nome}</h1><p style={{ fontSize: 12, color: "var(--color-text-tertiary)", margin: 0 }}>{gt?.descricao || `${membros.length} membros`}</p></div>
+      </div>
+      <div style={{ display: "flex", gap: 0, marginBottom: "1.25rem", borderBottom: "0.5px solid var(--color-border-tertiary)" }}>
+        {tabLabels.map((l, i) => (<button key={i} onClick={() => setTab(i)} style={{ flex: 1, padding: "10px 4px", fontSize: 13, fontWeight: tab === i ? 500 : 400, color: tab === i ? "var(--color-text-info)" : "var(--color-text-secondary)", background: "transparent", border: "none", borderBottom: tab === i ? "2px solid var(--color-text-info)" : "2px solid transparent", cursor: "pointer", marginBottom: -1 }}>{l}</button>))}
+      </div>
+      {error && (<div style={{ padding: "10px 14px", marginBottom: "1rem", borderRadius: "var(--border-radius-md)", background: "var(--color-background-danger)", color: "var(--color-text-danger)", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}><Ic d={ic.alert} size={16} /><span style={{ flex: 1 }}>{error}</span><button onClick={() => setError("")} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--color-text-danger)" }}><Ic d={ic.x} size={14} /></button></div>)}
+
+      {tab === 0 && (<div><h2 style={{ fontSize: 16, fontWeight: 500, marginBottom: 16 }}>Dados da reunião</h2><div style={{ display: "flex", flexDirection: "column", gap: 14 }}><div><label style={lbl}>Nome da reunião</label><input value={reuniao.nome} onChange={(e) => setReuniao({ ...reuniao, nome: e.target.value })} placeholder="Ex: Reunião Ordinária do CIE-COIC" style={{ width: "100%", boxSizing: "border-box" }} /></div><div><label style={lbl}>Edição / número</label><input value={reuniao.edicao} onChange={(e) => setReuniao({ ...reuniao, edicao: e.target.value })} placeholder="Ex: 57ª Reunião" style={{ width: "100%", boxSizing: "border-box" }} /></div><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}><div><label style={lbl}>Data</label><input type="date" value={reuniao.data} onChange={(e) => setReuniao({ ...reuniao, data: e.target.value })} style={{ width: "100%", boxSizing: "border-box" }} /></div><div><label style={lbl}>Horário</label><input value={reuniao.horario} onChange={(e) => setReuniao({ ...reuniao, horario: e.target.value })} style={{ width: "100%", boxSizing: "border-box" }} /></div></div><div><label style={lbl}>Local</label><input value={reuniao.local} onChange={(e) => setReuniao({ ...reuniao, local: e.target.value })} style={{ width: "100%", boxSizing: "border-box" }} /></div><div><label style={lbl}>Pauta da reunião</label><textarea value={reuniao.pauta_texto} onChange={(e) => setReuniao({ ...reuniao, pauta_texto: e.target.value })} rows={6} placeholder={"16h00 – 16h05 | Abertura e Boas-Vindas\nApresentação de Sr. Ilso Oliveira\n\n16h05 – 16h10 | Planejamento de Eventos\nApresentação de Sr. Ilso Oliveira"} style={{ width: "100%", boxSizing: "border-box", fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.6 }} /><div style={{ fontSize: 11, color: "var(--color-text-tertiary)", marginTop: 4 }}>Cole o texto da pauta ou deixe em branco para a IA identificar automaticamente da transcrição</div></div></div></div>)}
+
+      {tab === 1 && (<div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}><h2 style={{ fontSize: 16, fontWeight: 500, margin: 0 }}>Lista de presença</h2><div><input ref={excelRef} type="file" accept=".csv,.xlsx,.xls,.txt" onChange={handleExcel} style={{ display: "none" }} /><button onClick={() => excelRef.current?.click()} style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}><Ic d={ic.upload} size={14} /> Importar Excel/CSV</button></div></div>
+        {matchLog && <div style={{ padding: "8px 12px", marginBottom: 12, borderRadius: "var(--border-radius-md)", background: "var(--color-background-info)", color: "var(--color-text-info)", fontSize: 12 }}>{matchLog}</div>}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>{[{ l: "Total", v: qr.total, c: "var(--color-text-secondary)" }, { l: "Presentes", v: qr.pres, c: "var(--color-text-success)" }, { l: "Ausentes", v: qr.aus, c: "var(--color-text-danger)" }, { l: "Quórum", v: `${qr.pct}%`, c: qr.ok ? "var(--color-text-success)" : "var(--color-text-danger)" }].map((x, i) => (<div key={i} style={{ background: "var(--color-background-secondary)", borderRadius: "var(--border-radius-md)", padding: "8px 10px", textAlign: "center" }}><div style={{ fontSize: 11, color: "var(--color-text-tertiary)", marginBottom: 2 }}>{x.l}</div><div style={{ fontSize: 18, fontWeight: 500, color: x.c }}>{x.v}</div></div>))}</div>
+        {unmatched.length > 0 && (<div style={{ background: "var(--color-background-warning)", border: "0.5px solid var(--color-border-warning)", borderRadius: "var(--border-radius-lg)", padding: "12px 16px", marginBottom: 16 }}><div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-text-warning)", marginBottom: 8 }}>{unmatched.length} não identificado{unmatched.length > 1 ? "s" : ""}</div>{unmatched.map((u, idx) => (<div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 0", borderBottom: idx < unmatched.length - 1 ? "0.5px solid var(--color-border-warning)" : "none", gap: 8 }}><div><div style={{ fontSize: 13 }}>{u.name}</div>{u.email && <div style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>{u.email}</div>}</div><div style={{ display: "flex", gap: 6, flexShrink: 0 }}><button onClick={() => { setFormMode({ type: "add", unmIdx: idx }); setFormData({ nome: u.name, email: u.email || "", telefone: "", empresa: "", funcao: "", grupo: "" }); }} style={{ fontSize: 11, padding: "4px 10px" }}>Incluir</button><button onClick={() => setUnmatched((p) => p.filter((_, i) => i !== idx))} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--color-text-tertiary)", padding: 2 }}><Ic d={ic.x} size={14} /></button></div></div>))}</div>)}
+        {formMode && <MembroForm data={formData} onChange={setFormData} title={formMode.type === "edit" ? "Editar membro" : "Incluir novo membro"} saveLabel={formMode.type === "edit" ? "Atualizar" : "Salvar no GT"} onCancel={() => setFormMode(null)} onSave={() => { if (formMode.type === "edit") updateMembro(formMode.membroId, formData); else addMembro(formData, formMode.unmIdx); }} />}
+        {grupos.map((g) => { const gm = membros.filter((m) => (m.grupo || "Sem grupo") === g); return (<div key={g} style={{ marginBottom: 14 }}><div style={{ fontSize: 11, fontWeight: 500, color: "var(--color-text-tertiary)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4, padding: "0 4px" }}>{g} ({gm.filter((m) => presencas[m.id]).length}/{gm.length})</div>{gm.map((m) => (<div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px", borderRadius: "var(--border-radius-md)", background: presencas[m.id] ? "var(--color-background-success)" : "transparent", transition: "background 0.1s" }}><div onClick={() => setPresencas((p) => ({ ...p, [m.id]: !p[m.id] }))} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, cursor: "pointer", minWidth: 0 }}><Check checked={presencas[m.id]} /><div style={{ minWidth: 0 }}><div style={{ fontSize: 14, fontWeight: presencas[m.id] ? 500 : 400 }}>{m.nome}</div><div style={{ fontSize: 11, color: "var(--color-text-tertiary)" }}>{m.empresa}{m.funcao ? ` · ${m.funcao}` : ""}</div></div></div><button onClick={(e) => { e.stopPropagation(); setFormMode({ type: "edit", membroId: m.id }); setFormData({ nome: m.nome, email: m.email || "", telefone: m.telefone || "", empresa: m.empresa || "", funcao: m.funcao || "", grupo: m.grupo || "" }); }} style={{ border: "none", background: "none", cursor: "pointer", color: "var(--color-text-tertiary)", padding: 4, flexShrink: 0, opacity: 0.4 }}><Ic d={ic.edit} size={14} /></button></div>))}</div>); })}
+        {!formMode && <button onClick={() => { setFormMode({ type: "add" }); setFormData({ nome: "", email: "", telefone: "", empresa: "", funcao: "", grupo: "" }); }} style={{ width: "100%", padding: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, borderStyle: "dashed", fontSize: 13, marginTop: 8 }}><Ic d={ic.plus} size={14} /> Adicionar membro</button>}
+      </div>)}
+
+      {tab === 2 && (<div>
+        <h2 style={{ fontSize: 16, fontWeight: 500, marginBottom: 6 }}>Transcrição da reunião</h2>
+        <p style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 16 }}>Envie .docx ou .pdf, ou cole o texto. A IA vai processar e gerar a súmula no formato institucional da COIC.</p>
+        <div onClick={() => docRef.current?.click()} style={{ border: transFile ? "1px solid var(--color-border-info)" : "1px dashed var(--color-border-secondary)", borderRadius: "var(--border-radius-lg)", padding: "20px 16px", textAlign: "center", marginBottom: 16, cursor: "pointer", background: transFile ? "var(--color-background-info)" : "transparent" }}><input ref={docRef} type="file" accept=".docx,.doc,.pdf,.txt" onChange={handleDoc} style={{ display: "none" }} />{transFile ? (<><Ic d={ic.check} size={22} color="var(--color-text-info)" style={{ display: "block", margin: "0 auto 6px" }} /><div style={{ fontSize: 13, color: "var(--color-text-info)", fontWeight: 500 }}>Arquivo carregado</div><div style={{ fontSize: 11, color: "var(--color-text-tertiary)", marginTop: 2 }}>{transFile.name}</div><div style={{ fontSize: 11, color: "var(--color-text-tertiary)", marginTop: 4 }}>Clique para trocar</div></>) : (<><Ic d={ic.upload} size={28} color="var(--color-text-tertiary)" style={{ display: "block", margin: "0 auto 8px" }} /><div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Clique para enviar arquivo</div><div style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>.docx, .pdf ou .txt</div></>)}</div>
+        <div style={{ fontSize: 12, color: "var(--color-text-tertiary)", textAlign: "center", marginBottom: 12 }}>ou cole manualmente</div>
+        <textarea value={transcricao} onChange={(e) => setTranscricao(e.target.value)} placeholder="Cole a transcrição..." rows={14} style={{ width: "100%", boxSizing: "border-box", fontFamily: "var(--font-mono)", fontSize: 12, lineHeight: 1.6 }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}><span style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>{transcricao.length > 0 ? `${transcricao.length.toLocaleString()} caracteres` : ""}</span><button onClick={processar} disabled={loading || !transcricao.trim()} style={{ display: "flex", alignItems: "center", gap: 6, opacity: loading || !transcricao.trim() ? 0.5 : 1 }}>{loading ? (<><span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}><Ic d={ic.loader} size={14} /></span> Processando...</>) : (<><Ic d={ic.send} size={14} /> Gerar súmula</>)}</button></div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>)}
+
+      {tab === 3 && (<div>{!sumula ? (<div style={{ textAlign: "center", padding: "3rem", color: "var(--color-text-tertiary)" }}>Processe a transcrição primeiro.</div>) : (<div style={{ background: "var(--color-background-primary)", border: "0.5px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-lg)", padding: "1.5rem" }}>
+        {/* Header table */}
+        <div style={{ border: "0.5px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-md)", padding: "12px 16px", marginBottom: 16, fontSize: 13 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div><span style={{ fontWeight: 500 }}>Data e hora:</span> {reuniao.data} | {reuniao.horario}</div>
+            <div><span style={{ fontWeight: 500 }}>Local:</span> {reuniao.local}</div>
+            <div><span style={{ fontWeight: 500 }}>Participantes:</span> Presidente da COIC/CBIC, membros do {gt?.nome} e Gestor de Projetos</div>
+            <div><span style={{ fontWeight: 500 }}>Áreas:</span> COIC – Comissão de Obras Industriais e Corporativas</div>
+          </div>
+          <div style={{ marginTop: 8 }}><span style={{ fontWeight: 500 }}>Objetivo:</span> {reuniao.edicao ? reuniao.edicao + " — " : ""}{reuniao.nome || "Reunião do " + gt?.nome}</div>
+        </div>
+        {/* Informes */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 8, borderBottom: "0.5px solid var(--color-border-tertiary)", paddingBottom: 6 }}>Informes</div>
+          <div style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.8 }}>{sumula.informes}</div>
+        </div>
+        {/* Quadro de pautas */}
+        {sumula.quadro_pautas?.length > 0 && (
+          <div style={{ marginBottom: 16, background: "var(--color-background-secondary)", borderRadius: "var(--border-radius-md)", padding: "12px 16px" }}>
+            <div style={{ fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--color-text-tertiary)", marginBottom: 8 }}>Pauta da {reuniao.edicao || ""} {reuniao.nome || gt?.nome}</div>
+            {sumula.quadro_pautas.map((p, i) => (<div key={i} style={{ marginBottom: 8, fontSize: 13 }}><div style={{ fontWeight: 500 }}>{p.horario} | {p.titulo}</div><div style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>Apresentação de {p.apresentador}</div></div>))}
+          </div>
+        )}
+        {/* Seções */}
+        {sumula.secoes?.map((s, i) => (
+          <div key={i} style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, textTransform: "uppercase", marginBottom: 8 }}>{s.titulo}</div>
+            {s.bullets?.map((b, j) => (<div key={j} style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.8, marginBottom: 8, paddingLeft: 16, position: "relative" }}><span style={{ position: "absolute", left: 0 }}>•</span>{b}</div>))}
+          </div>
+        ))}
+        {/* Encerramento */}
+        {sumula.encerramento && <div style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.8, marginBottom: 16 }}>{sumula.encerramento}</div>}
+        {/* Quórum */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>Quórum</div>
+          <div style={{ fontSize: 12, border: "0.5px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-md)", overflow: "hidden" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1.5fr 0.8fr", gap: 0, background: "var(--color-background-secondary)", padding: "6px 10px", fontWeight: 500, fontSize: 11, color: "var(--color-text-tertiary)" }}><span>Nome</span><span>Empresa</span><span style={{ textAlign: "center" }}>Presença</span></div>
+            {membros.map((m, i) => (<div key={m.id} style={{ display: "grid", gridTemplateColumns: "2fr 1.5fr 0.8fr", gap: 0, padding: "5px 10px", borderTop: "0.5px solid var(--color-border-tertiary)", background: presencas[m.id] ? "var(--color-background-success)" : "transparent" }}><span style={{ fontSize: 12 }}>{m.nome}</span><span style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>{m.empresa}</span><span style={{ fontSize: 12, textAlign: "center", color: presencas[m.id] ? "var(--color-text-success)" : "var(--color-text-danger)" }}>{presencas[m.id] ? "✓" : "—"}</span></div>))}
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1.5fr 0.8fr", padding: "6px 10px", borderTop: "0.5px solid var(--color-border-tertiary)", background: "var(--color-background-secondary)", fontSize: 12, fontWeight: 500 }}><span>Total</span><span></span><span style={{ textAlign: "center" }}>{qr.pres}/{qr.total} ({qr.pct}%)</span></div>
+          </div>
+        </div>
+        {/* Footer */}
+        <div style={{ borderTop: "0.5px solid var(--color-border-tertiary)", paddingTop: 12, fontSize: 12, color: "var(--color-text-tertiary)", lineHeight: 1.7 }}>
+          As contribuições e retificações a esta súmula devem ser enviadas para coic@cbic.org.br, preferencialmente, em até 48 horas após o seu recebimento. A não manifestação implica na aceitação da Súmula.
+          <div style={{ marginTop: 12, fontWeight: 500 }}>Súmula elaborada por:</div>
+          <div>Alexandre Nícolas Dantas dos Santos</div>
+          <div>Gestor de Projetos da COIC</div>
+        </div>
+      </div>)}</div>)}
+
+      {tab === 4 && (<div>{!sumula ? (<div style={{ textAlign: "center", padding: "3rem", color: "var(--color-text-tertiary)" }}>Nenhuma súmula para exportar.</div>) : (<><h2 style={{ fontSize: 16, fontWeight: 500, marginBottom: 16 }}>Exportar</h2><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 20 }}><button onClick={async () => { setLoading(true); setError(""); try { const resp = await fetch(`/api/generate-sumula`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ data: { data: reuniao.data, horario_inicio: reuniao.horario?.split(" às ")?.[0] || "16h00", horario_fim: reuniao.horario?.split(" às ")?.[1] || "18h00", local: reuniao.local, objetivo: `${reuniao.edicao || ""} ${reuniao.nome || gt?.nome || "Reunião"}`.trim(), numero_reuniao: reuniao.edicao?.match(/\d+/)?.[0] || "", titulo_reuniao: (reuniao.nome || gt?.nome || "REUNIÃO").toUpperCase(), informes: sumula?.informes || "", pauta: sumula?.quadro_pautas || [], secoes: (sumula?.secoes || []).map(s => ({ titulo_secao: s.titulo, conteudo_secao: (s.bullets || []).join("\n") })), quorum: membros.map(m => ({ nome: m.nome, entidade: m.empresa || "", total_reunioes: "1", presencas: presencas[m.id] ? "1" : "0", percentual: presencas[m.id] ? "100%" : "0%" })), ano: String(new Date().getFullYear()) }, gtId: selGtId }) }); if (!resp.ok) throw new Error("API indisponível"); const blob = await resp.blob(); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = `Sumula_${reuniao.edicao || "reuniao"}_${reuniao.data}.docx`; a.click(); URL.revokeObjectURL(url); } catch { const t = exportarTexto(); if (t) sendPrompt(`Gere um documento Word (.docx) profissional com esta súmula do ${gt?.nome || "GT"} da COIC/CBIC. Use formatação idêntica ao modelo institucional: tabela de cabeçalho com Data/hora, Local, Participantes, Áreas e Objetivo; seção INFORMES com parágrafo de abertura e pautas; tabela de QUÓRUM; rodapé institucional. Conteúdo:\n\n${t}`); } finally { setLoading(false); } }} disabled={loading} style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, borderRadius: "var(--border-radius-lg)", opacity: loading ? 0.5 : 1 }}><Ic d={ic.download} size={24} /><span style={{ fontSize: 13, fontWeight: 500 }}>{loading ? "Gerando..." : "Baixar Word"}</span><span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>Template CBIC</span></button><button onClick={() => { const t = exportarTexto(); if (t) sendPrompt(`Gere um documento Word (.docx) profissional com esta súmula do ${gt?.nome || "GT"} da COIC/CBIC. Use formatação idêntica ao modelo institucional: tabela de cabeçalho com Data/hora, Local, Participantes, Áreas e Objetivo; seção INFORMES com parágrafo de abertura e pautas; tabela de QUÓRUM; rodapé institucional. Conteúdo:\n\n${t}`); }} style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, borderRadius: "var(--border-radius-lg)" }}><Ic d={ic.file} size={24} /><span style={{ fontSize: 13, fontWeight: 500 }}>Gerar via Chat</span><span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>Fallback</span></button><button onClick={() => { const t = exportarTexto(); if (t) { navigator.clipboard.writeText(t); setCopied(true); setTimeout(() => setCopied(false), 2000); } }} style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, borderRadius: "var(--border-radius-lg)" }}><Ic d={copied ? ic.check : ic.clipboard} size={24} /><span style={{ fontSize: 13, fontWeight: 500 }}>{copied ? "Copiado!" : "Copiar texto"}</span><span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>Para e-mail</span></button></div><div style={{ background: "var(--color-background-secondary)", borderRadius: "var(--border-radius-md)", padding: "12px 16px" }}><div style={{ fontSize: 12, color: "var(--color-text-tertiary)", marginBottom: 6 }}>Prévia</div><pre style={{ fontSize: 11, fontFamily: "var(--font-mono)", whiteSpace: "pre-wrap", lineHeight: 1.6, color: "var(--color-text-secondary)", maxHeight: 280, overflow: "auto", margin: 0 }}>{exportarTexto()}</pre></div></>)}</div>)}
+
+      <div style={{ marginTop: "1.5rem", paddingTop: "0.75rem", borderTop: "0.5px solid var(--color-border-tertiary)", fontSize: 11, color: "var(--color-text-tertiary)", textAlign: "center" }}>Gestor de Projetos COIC — coic@cbic.org.br</div>
+    </div>
+  );
+}
+
+// Render
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(SumulasApp));
+  </script>
+</body>
+</html>

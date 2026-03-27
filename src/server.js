@@ -94,4 +94,72 @@ app.post("/api/reunioes/:reuniaoId/presencas", (req, res) => {
 });
 
 // ── Match Attendance ──
-app.post("/api/gts/:gtId/match-attendance", upl
+app.post("/api/gts/:gtId/match-attendance", upload.single("file"), async (req, res) => {
+  try {
+    var membros = db.getMembros(req.params.gtId);
+    var result = await matchAttendance(req.file.path, membros);
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.json(result);
+  } catch (err) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Extract Text ──
+app.post("/api/extract-text", upload.single("file"), async (req, res) => {
+  try {
+    var text = await extractDocxText(req.file.path, req.file.originalname);
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.json({ text: text });
+  } catch (err) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Generate Sumula DOCX ──
+app.post("/api/generate-sumula", async (req, res) => {
+  try {
+    var data = req.body.data;
+    var gtId = req.body.gtId;
+
+    if (gtId) {
+      var ano = data.ano || String(new Date().getFullYear());
+      var quorum = db.getQuorum(gtId, parseInt(ano));
+      if (quorum.length > 0) data.quorum = quorum;
+      data.ano = ano;
+    }
+
+    var buffer = await generateSumula(data);
+
+    var filename = "Sumula_" + (data.numero_reuniao || "reuniao") + "_" + (data.data || "doc").replace(/\//g, "-") + ".docx";
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    res.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+    res.send(buffer);
+  } catch (err) {
+    console.error("Erro gerando sumula:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Settings ──
+app.get("/api/settings", (req, res) => {
+  res.json(db.getSettings());
+});
+
+app.put("/api/settings", (req, res) => {
+  db.saveSettings(req.body);
+  res.json({ ok: true });
+});
+
+// SPA fallback
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/index.html"));
+});
+
+app.listen(PORT, "0.0.0.0", function () {
+  console.log("");
+  console.log("  Sumulas COIC rodando em http://localhost:" + PORT);
+  console.log("");
+});

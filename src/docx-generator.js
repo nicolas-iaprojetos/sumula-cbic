@@ -5,6 +5,15 @@ var Docxtemplater = require("docxtemplater");
 
 var TEMPLATE_PATH = path.join(__dirname, "../templates/Sumula_Template_v2.docx");
 
+function formatDate(d) {
+  // Convert 2026-03-25 to 25/03/2026
+  if (!d) return "";
+  if (d.indexOf("/") >= 0) return d;
+  var parts = d.split("-");
+  if (parts.length === 3) return parts[2] + "/" + parts[1] + "/" + parts[0];
+  return d;
+}
+
 async function generateSumula(data) {
   if (!fs.existsSync(TEMPLATE_PATH)) {
     throw new Error("Template nao encontrado em: " + TEMPLATE_PATH + " - Envie o arquivo Sumula_Template_v2.docx para a pasta templates/");
@@ -19,8 +28,16 @@ async function generateSumula(data) {
     delimiters: { start: "{", end: "}" }
   });
 
+  // Format sections: ensure conteudo_secao exists
+  var secoes = (data.secoes || []).map(function(s) {
+    return {
+      titulo_secao: s.titulo_secao || s.titulo || "",
+      conteudo_secao: s.conteudo_secao || (s.bullets ? s.bullets.join("\n") : "")
+    };
+  });
+
   doc.render({
-    data: data.data || "",
+    data: formatDate(data.data) || "",
     horario_inicio: data.horario_inicio || "",
     horario_fim: data.horario_fim || "",
     local: data.local || "",
@@ -30,7 +47,7 @@ async function generateSumula(data) {
     ano: data.ano || String(new Date().getFullYear()),
     informes: data.informes || "",
     pauta: data.pauta || [],
-    secoes: data.secoes || [],
+    secoes: secoes,
     quorum: data.quorum || [],
     anexos: data.anexos || []
   });

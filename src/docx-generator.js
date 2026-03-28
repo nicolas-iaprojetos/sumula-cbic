@@ -144,12 +144,10 @@ function fixPauta(xml) {
     }
     
     // Ensure vAlign=center in cell properties (vertical centering within cell)
-    match = match.replace(/<w:tcPr>((?:(?!<\/w:tcPr>).)*)<\/w:tcPr>/gs, function(tcMatch, tcInner) {
-      if (tcInner.indexOf("w:vAlign") < 0) {
-        return '<w:tcPr>' + tcInner + '<w:vAlign w:val="center"/></w:tcPr>';
-      }
-      return tcMatch;
-    });
+    // Simple approach: if vAlign not present, add it before </w:tcPr>
+    if (match.indexOf("w:vAlign") < 0) {
+      match = match.split("</w:tcPr>").join('<w:vAlign w:val="center"/></w:tcPr>');
+    }
     
     // Do NOT change horizontal alignment - keep text left-aligned
     

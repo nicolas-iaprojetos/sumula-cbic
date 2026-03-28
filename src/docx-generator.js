@@ -17,11 +17,52 @@ function escapeXml(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-var BULLET_XML = '<w:p><w:pPr><w:pStyle w:val="PargrafodaLista"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr><w:spacing w:before="120" w:after="120" w:line="276" w:lineRule="auto"/><w:ind w:right="457"/><w:contextualSpacing w:val="0"/><w:jc w:val="both"/><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">TEXT_HERE</w:t></w:r></w:p>';
+// Headline paragraph XML (bold + border bottom, matching template style)
+function headlineXml(text) {
+  return '<w:p><w:pPr>' +
+    '<w:pBdr><w:bottom w:val="single" w:sz="12" w:space="1" w:color="auto"/></w:pBdr>' +
+    '<w:spacing w:before="240" w:line="276" w:lineRule="auto"/>' +
+    '<w:ind w:right="315"/><w:jc w:val="both"/>' +
+    '<w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
+    '<w:b/><w:bCs/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>' +
+    '</w:pPr><w:r><w:rPr>' +
+    '<w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
+    '<w:b/><w:bCs/><w:sz w:val="22"/><w:szCs w:val="22"/>' +
+    '</w:rPr><w:t xml:space="preserve">' + escapeXml(text) + '</w:t></w:r></w:p>';
+}
 
-var SUB_BULLET_XML = '<w:p><w:pPr><w:pStyle w:val="PargrafodaLista"/><w:numPr><w:ilvl w:val="1"/><w:numId w:val="15"/></w:numPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/><w:ind w:right="318" w:hanging="357"/><w:contextualSpacing w:val="0"/><w:jc w:val="both"/><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">TEXT_HERE</w:t></w:r></w:p>';
+// Bullet paragraph XML (filled circle marker)
+function bulletXml(text) {
+  return '<w:p><w:pPr>' +
+    '<w:pStyle w:val="PargrafodaLista"/>' +
+    '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr>' +
+    '<w:spacing w:before="120" w:after="120" w:line="276" w:lineRule="auto"/>' +
+    '<w:ind w:right="457"/><w:contextualSpacing w:val="0"/><w:jc w:val="both"/>' +
+    '<w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
+    '<w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>' +
+    '</w:pPr><w:r><w:rPr>' +
+    '<w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
+    '<w:sz w:val="22"/><w:szCs w:val="22"/>' +
+    '</w:rPr><w:t xml:space="preserve">' + escapeXml(text) + '</w:t></w:r></w:p>';
+}
 
-function textToBulletXml(text) {
+// Sub-bullet paragraph XML (open circle marker)
+function subBulletXml(text) {
+  return '<w:p><w:pPr>' +
+    '<w:pStyle w:val="PargrafodaLista"/>' +
+    '<w:numPr><w:ilvl w:val="1"/><w:numId w:val="15"/></w:numPr>' +
+    '<w:spacing w:after="120" w:line="276" w:lineRule="auto"/>' +
+    '<w:ind w:right="318" w:hanging="357"/><w:contextualSpacing w:val="0"/><w:jc w:val="both"/>' +
+    '<w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
+    '<w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>' +
+    '</w:pPr><w:r><w:rPr>' +
+    '<w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
+    '<w:sz w:val="22"/><w:szCs w:val="22"/>' +
+    '</w:rPr><w:t xml:space="preserve">' + escapeXml(text) + '</w:t></w:r></w:p>';
+}
+
+// Convert section content text to proper XML paragraphs
+function contentToXml(text) {
   if (!text) return "";
   var lines = text.split("\n");
   var result = "";
@@ -29,47 +70,68 @@ function textToBulletXml(text) {
     var line = lines[i].trim();
     if (!line) continue;
     if (line.indexOf(">> ") === 0) {
-      result += SUB_BULLET_XML.replace("TEXT_HERE", escapeXml(line.substring(3).trim()));
+      result += subBulletXml(line.substring(3).trim());
     } else if (line.indexOf("- ") === 0) {
-      result += BULLET_XML.replace("TEXT_HERE", escapeXml(line.substring(2).trim()));
+      result += bulletXml(line.substring(2).trim());
     } else {
-      result += BULLET_XML.replace("TEXT_HERE", escapeXml(line));
+      result += bulletXml(line);
     }
   }
   return result;
 }
 
-function postProcessDocXml(xml) {
-  // Find <w:p> elements that contain bullet text markers and expand them
-  var result = xml.replace(/<w:p\b[^>]*>(?:(?!<\/w:p>).)*<\/w:p>/gs, function(match) {
-    // Extract all text from this paragraph
-    var texts = [];
-    var re = /<w:t[^>]*>([^<]*)<\/w:t>/g;
-    var m;
-    while ((m = re.exec(match)) !== null) {
-      texts.push(m[1]);
+function postProcessDocXml(xml, secoes) {
+  if (!secoes || secoes.length === 0) return xml;
+
+  // Strategy: find each {secoes} output block and replace the content paragraphs
+  // with properly formatted headline + bullet paragraphs.
+  //
+  // The docxtemplater with linebreaks:true puts \n as <w:br/> inside the same <w:p>,
+  // which means the title paragraph is correct (bold+border) but the content paragraph
+  // has all the text crammed into one paragraph with line breaks.
+  //
+  // We need to find each content paragraph (the one after a bold+border headline)
+  // and split it into individual bullet paragraphs.
+
+  for (var i = 0; i < secoes.length; i++) {
+    var s = secoes[i];
+    var titulo = s.titulo_secao || s.titulo || "";
+    var conteudo = s.conteudo_secao || "";
+    
+    if (!titulo || !conteudo) continue;
+    
+    // Find the headline paragraph in the rendered XML
+    var tituloEsc = escapeXml(titulo);
+    var titlePos = xml.indexOf(tituloEsc);
+    if (titlePos < 0) {
+      // Try without accents
+      tituloEsc = titulo.replace(/[áàãâ]/g, "a").replace(/[éèê]/g, "e").replace(/[íìî]/g, "i").replace(/[óòõô]/g, "o").replace(/[úùû]/g, "u");
+      tituloEsc = escapeXml(tituloEsc);
+      titlePos = xml.indexOf(tituloEsc);
     }
-    var fullText = texts.join("");
+    if (titlePos < 0) continue;
     
-    // Unescape XML entities
-    var raw = fullText
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"');
+    // Find the paragraph containing the title
+    var titlePStart = xml.lastIndexOf("<w:p", titlePos);
+    var titlePEnd = xml.indexOf("</w:p>", titlePos) + 6;
     
-    // Check if it has bullets
-    var bulletCount = 0;
-    var pos = 0;
-    while ((pos = raw.indexOf("- ", pos)) !== -1) { bulletCount++; pos += 2; }
-    var hasSubBullets = raw.indexOf(">> ") >= 0;
+    // The NEXT paragraph should be the content paragraph
+    var contentPStart = xml.indexOf("<w:p", titlePEnd);
+    if (contentPStart < 0) continue;
+    var contentPEnd = xml.indexOf("</w:p>", contentPStart) + 6;
     
-    if (bulletCount < 2 && !hasSubBullets) return match;
+    // Verify this is actually a content paragraph (not another headline)
+    var contentPar = xml.substring(contentPStart, contentPEnd);
+    if (contentPar.indexOf("w:pBdr") >= 0) continue; // skip if it's another headline
     
-    return textToBulletXml(raw);
-  });
+    // Replace the content paragraph with properly formatted bullet paragraphs
+    var newContent = contentToXml(conteudo);
+    if (newContent) {
+      xml = xml.substring(0, contentPStart) + newContent + xml.substring(contentPEnd);
+    }
+  }
   
-  return result;
+  return xml;
 }
 
 async function generateSumula(data) {
@@ -109,10 +171,10 @@ async function generateSumula(data) {
     anexos: data.anexos || []
   });
 
-  // Post-process XML for bullets
+  // Post-process XML
   var outputZip = doc.getZip();
   var docXml = outputZip.file("word/document.xml").asText();
-  docXml = postProcessDocXml(docXml);
+  docXml = postProcessDocXml(docXml, secoes);
   outputZip.file("word/document.xml", docXml);
 
   return outputZip.generate({ type: "nodebuffer", compression: "DEFLATE" });

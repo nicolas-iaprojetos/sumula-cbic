@@ -134,6 +134,39 @@ function postProcessDocXml(xml, secoes) {
   return xml;
 }
 
+// Fix pauta table: center text horizontally and set row height for vertical centering
+function fixPautaCentering(xml) {
+  xml = xml.replace(/<w:tr\b[^>]*>(?:(?!<\/w:tr>).)*<\/w:tr>/gs, function(match) {
+    // Check if this row contains time patterns (pauta rows like "16h30")
+    var isPautaRow = /\d{2}h\d{2}/.test(match);
+    var isApresentadorRow = /Apresenta/.test(match);
+    
+    if (!isPautaRow && !isApresentadorRow) return match;
+    
+    // Add trHeight for vertical centering to work
+    if (match.indexOf("w:trHeight") < 0) {
+      if (match.indexOf("<w:trPr>") >= 0) {
+        match = match.replace("<w:trPr>", '<w:trPr><w:trHeight w:val="567" w:hRule="atLeast"/>');
+      } else {
+        // Insert trPr after <w:tr...>
+        match = match.replace(/(<w:tr\b[^>]*>)/, '$1<w:trPr><w:trHeight w:val="567" w:hRule="atLeast"/></w:trPr>');
+      }
+    }
+    
+    // Change jc="both" to jc="center" for horizontal centering
+    match = match.replace(/<w:jc w:val="both"\/>/g, '<w:jc w:val="center"/>');
+    
+    // If no jc at all, add center to paragraph properties
+    if (match.indexOf("<w:jc") < 0 && match.indexOf("<w:pPr>") >= 0) {
+      match = match.replace(/<w:pPr>/g, '<w:pPr><w:jc w:val="center"/>');
+    }
+    
+    return match;
+  });
+  
+  return xml;
+}
+
 async function generateSumula(data) {
   if (!fs.existsSync(TEMPLATE_PATH)) {
     throw new Error("Template nao encontrado em: " + TEMPLATE_PATH);
@@ -175,6 +208,7 @@ async function generateSumula(data) {
   var outputZip = doc.getZip();
   var docXml = outputZip.file("word/document.xml").asText();
   docXml = postProcessDocXml(docXml, secoes);
+  docXml = fixPautaCentering(docXml);
   outputZip.file("word/document.xml", docXml);
 
   return outputZip.generate({ type: "nodebuffer", compression: "DEFLATE" });

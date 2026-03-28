@@ -27,12 +27,8 @@ function mkSubBullet(text) {
 }
 
 /**
- * Convert text content (with - bullets and >> sub-bullets) to Word XML paragraphs.
- * Input format:
- *   "- First bullet point"
- *   "- Second bullet point"
- *   ">> Sub-bullet under second"
- *   "- Third bullet point"
+ * Convert text content to Word XML bullet paragraphs.
+ * Handles: "- " for bullets, ">> " for sub-bullets, plain text as bullets.
  */
 function contentToXml(text) {
   if (!text) return "";
@@ -46,7 +42,6 @@ function contentToXml(text) {
     } else if (line.indexOf("- ") === 0) {
       out += mkBullet(line.substring(2).trim());
     } else {
-      // Plain text line — treat as bullet
       out += mkBullet(line);
     }
   }
@@ -54,48 +49,109 @@ function contentToXml(text) {
 }
 
 /**
- * Post-process the rendered XML to convert plain-text section content
- * into proper Word XML bullets.
+ * Post-process rendered XML:
+ * 
+ * The docxtemplater with linebreaks:true renders multi-line content as a SINGLE
+ * <w:p> with <w:br/> between lines:
+ * 
+ *   <w:p>
+ *     <w:r><w:t>- Bullet 1</w:t></w:r>
+ *     <w:r><w:br/></w:r>
+ *     <w:r><w:t>- Bullet 2</w:t></w:r>
+ *   </w:p>
  *
- * Template v3 structure after docxtemplater renders:
- *   <w:p>...<w:t>{titulo_secao text}</w:t>...</w:p>     ← headline (bold + border)
- *   <w:p>...<w:t>{conteudo_secao text}</w:t>...</w:p>   ← plain text content → needs conversion
- *
- * Strategy: find each content paragraph that follows a headline paragraph,
- * extract its text, convert to bullet XML, and replace the paragraph.
+ * We need to find these paragraphs and replace them with proper bullet XML.
+ * Strategy: search for the NormalWeb-styled paragraph that contains the first
+ * line of each section's content, then replace the ENTIRE <w:p>...</w:p>.
  */
 function postProcess(xml, secoes) {
   if (!secoes || secoes.length === 0) return xml;
 
+  // Process in REVERSE order to preserve string positions
   for (var i = secoes.length - 1; i >= 0; i--) {
     var conteudo = secoes[i].conteudo_secao || "";
     if (!conteudo) continue;
 
-    // The content was rendered as plain text inside a <w:p> with NormalWeb style.
-    // Find it by looking for the escaped content text.
-    // Take first 40 chars of the first line as search key
-    var firstLine = conteudo.split("\n")[0].trim();
+    // Get first meaningful line of content to use as search key
+    var lines = conteudo.split("\n");
+    var firstLine = "";
+    for (var k = 0; k < lines.length; k++) {
+      var l = lines[k].trim();
+      if (l) { firstLine = l; break; }
+    }
+    if (!firstLine) continue;
+
+    // Strip bullet prefix for search
     if (firstLine.indexOf("- ") === 0) firstLine = firstLine.substring(2);
     if (firstLine.indexOf(">> ") === 0) firstLine = firstLine.substring(3);
-    var searchKey = esc(firstLine.substring(0, Math.min(40, firstLine.length)));
+
+    // Take first 50 chars as search key (escaped for XML)
+    var searchKey = esc(firstLine.substring(0, Math.min(50, firstLine.length)));
 
     var keyPos = xml.indexOf(searchKey);
+    if (keyPos < 0) {
+      // Try shorter key
+      searchKey = esc(firstLine.substring(0, Math.min(25, firstLine.length)));
+      keyPos = xml.indexOf(searchKey);
+    }
     if (keyPos < 0) continue;
 
-    // Find the enclosing <w:p> of this content
-    var pStart = xml.lastIndexOf("<w:p", keyPos);
-    var pEnd = xml.indexOf("</w:p>", keyPos);
-    if (pStart < 0 || pEnd < 0) continue;
-    pEnd += 6; // include </w:p>
+    // Find the enclosing <w:p> — walk backwards looking for <w:p> or <w:p 
+    var pStart = keyPos;
+    while (pStart > 0) {
+      pStart = xml.lastIndexOf("<w:p", pStart - 1);
+      if (pStart < 0) break;
+      var nextChar = xml.charAt(pStart + 4);
+      if (nextChar === ">" || nextChar === " ") break;
+    }
+    if (pStart < 0) continue;
 
-    // Generate bullet XML from the content
+    // Find the closing </w:p> — but we need to find the RIGHT one.
+    // Since <w:p> can't nest inside <w:p>, the first </w:p> after pStart is ours.
+    // However, we need to make sure we go past the search key position.
+    var pEnd = xml.indexOf("</w:p>", keyPos);
+    if (pEnd < 0) continue;
+    pEnd += 6;
+
+    // Sanity checks
+    var paragraphXml = xml.substring(pStart, pEnd);
+    if (paragraphXml.indexOf(searchKey) < 0) continue;
+    if (paragraphXml.indexOf("w:pBdr") >= 0) continue; // Don't replace headlines
+
+    // Generate bullet XML from the original content text
     var bulletXml = contentToXml(conteudo);
     if (!bulletXml) continue;
 
-    // Replace the plain-text paragraph with bullet paragraphs
+    // Replace the entire paragraph with bullet paragraphs
     xml = xml.substring(0, pStart) + bulletXml + xml.substring(pEnd);
   }
 
+  return xml;
+}
+
+/**
+ * Remove the ANEXO section when there are no images.
+ */
+function removeEmptyAnexo(xml) {
+  var anexoPos = xml.indexOf(">ANEXO<");
+  if (anexoPos < 0) return xml;
+
+  // Check if there are any actual images after ANEXO
+  var afterAnexo = xml.substring(anexoPos);
+  if (afterAnexo.indexOf("w:drawing") >= 0 || afterAnexo.indexOf("pic:pic") >= 0) {
+    return xml; // Has images, keep it
+  }
+
+  // Find the paragraph containing ANEXO
+  var pStart = xml.lastIndexOf("<w:p ", anexoPos);
+  if (pStart < 0) pStart = xml.lastIndexOf("<w:p>", anexoPos);
+  if (pStart < 0) return xml;
+
+  // Remove everything from ANEXO paragraph to just before <w:sectPr
+  var sectPr = xml.indexOf("<w:sectPr", anexoPos);
+  if (sectPr < 0) return xml;
+
+  xml = xml.substring(0, pStart) + xml.substring(sectPr);
   return xml;
 }
 
@@ -119,6 +175,14 @@ async function generateSumula(data) {
     };
   });
 
+  // FIX 2: Add encerramento as the last section if present
+  if (data.encerramento && data.encerramento.trim()) {
+    secoes.push({
+      titulo_secao: "PALAVRA ABERTA E ENCERRAMENTO",
+      conteudo_secao: "- " + data.encerramento.trim()
+    });
+  }
+
   doc.render({
     data: formatDate(data.data) || "",
     horario_inicio: data.horario_inicio || "",
@@ -138,8 +202,13 @@ async function generateSumula(data) {
   var outputZip = doc.getZip();
   var docXml = outputZip.file("word/document.xml").asText();
 
-  // Post-process: convert plain-text section content to proper Word XML bullets
+  // FIX 1: Convert plain-text content to proper Word XML bullets
   docXml = postProcess(docXml, secoes);
+
+  // FIX 3: Remove empty ANEXO section
+  if (!data.anexos || data.anexos.length === 0) {
+    docXml = removeEmptyAnexo(docXml);
+  }
 
   outputZip.file("word/document.xml", docXml);
   return outputZip.generate({ type: "nodebuffer", compression: "DEFLATE" });

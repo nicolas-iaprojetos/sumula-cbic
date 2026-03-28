@@ -152,7 +152,54 @@ app.put("/api/settings", (req, res) => {
   db.saveSettings(req.body);
   res.json({ ok: true });
 });
+// ── AI Proxy (evita CORS do browser) ──
+app.post("/api/ai/chat", async (req, res) => {
+  try {
+    var settings = db.getSettings();
+    var apiKey = req.body.apiKey || settings.apiKey || "";
+    var provider = req.body.provider || settings.provider || "anthropic";
+    var model = req.body.model || settings.model || "claude-sonnet-4-20250514";
+    var messages = req.body.messages || [];
 
+    if (provider === "anthropic") {
+      var response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: 4096,
+          messages: messages
+        })
+      });
+      var data = await response.json();
+      res.json(data);
+    } else if (provider === "openai") {
+      var response2 = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + apiKey
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: 4096,
+          messages: messages
+        })
+      });
+      var data2 = await response2.json();
+      res.json(data2);
+    } else {
+      res.status(400).json({ error: "Provedor nao suportado: " + provider });
+    }
+  } catch (err) {
+    console.error("AI Proxy error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 // SPA fallback
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/index.html"));

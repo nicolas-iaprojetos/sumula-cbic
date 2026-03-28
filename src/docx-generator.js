@@ -13,158 +13,150 @@ function formatDate(d) {
   return d;
 }
 
-function escapeXml(s) {
+function esc(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// Headline paragraph XML (bold + border bottom, matching template style)
-function headlineXml(text) {
-  return '<w:p><w:pPr>' +
-    '<w:pBdr><w:bottom w:val="single" w:sz="12" w:space="1" w:color="auto"/></w:pBdr>' +
-    '<w:spacing w:before="240" w:line="276" w:lineRule="auto"/>' +
-    '<w:ind w:right="315"/><w:jc w:val="both"/>' +
-    '<w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
-    '<w:b/><w:bCs/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>' +
-    '</w:pPr><w:r><w:rPr>' +
-    '<w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
-    '<w:b/><w:bCs/><w:sz w:val="22"/><w:szCs w:val="22"/>' +
-    '</w:rPr><w:t xml:space="preserve">' + escapeXml(text) + '</w:t></w:r></w:p>';
+function mkHeadline(text) {
+  return '<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="12" w:space="1" w:color="auto"/></w:pBdr><w:spacing w:before="240" w:line="276" w:lineRule="auto"/><w:ind w:right="315"/><w:jc w:val="both"/><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:b/><w:bCs/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">' + esc(text) + '</w:t></w:r></w:p>';
 }
 
-// Bullet paragraph XML (filled circle marker)
-function bulletXml(text) {
-  return '<w:p><w:pPr>' +
-    '<w:pStyle w:val="PargrafodaLista"/>' +
-    '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr>' +
-    '<w:spacing w:before="120" w:after="120" w:line="276" w:lineRule="auto"/>' +
-    '<w:ind w:right="457"/><w:contextualSpacing w:val="0"/><w:jc w:val="both"/>' +
-    '<w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
-    '<w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>' +
-    '</w:pPr><w:r><w:rPr>' +
-    '<w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
-    '<w:sz w:val="22"/><w:szCs w:val="22"/>' +
-    '</w:rPr><w:t xml:space="preserve">' + escapeXml(text) + '</w:t></w:r></w:p>';
+function mkBullet(text) {
+  return '<w:p><w:pPr><w:pStyle w:val="PargrafodaLista"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr><w:spacing w:before="120" w:after="120" w:line="276" w:lineRule="auto"/><w:ind w:right="457"/><w:contextualSpacing w:val="0"/><w:jc w:val="both"/><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">' + esc(text) + '</w:t></w:r></w:p>';
 }
 
-// Sub-bullet paragraph XML (open circle marker)
-function subBulletXml(text) {
-  return '<w:p><w:pPr>' +
-    '<w:pStyle w:val="PargrafodaLista"/>' +
-    '<w:numPr><w:ilvl w:val="1"/><w:numId w:val="15"/></w:numPr>' +
-    '<w:spacing w:after="120" w:line="276" w:lineRule="auto"/>' +
-    '<w:ind w:right="318" w:hanging="357"/><w:contextualSpacing w:val="0"/><w:jc w:val="both"/>' +
-    '<w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
-    '<w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr>' +
-    '</w:pPr><w:r><w:rPr>' +
-    '<w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/>' +
-    '<w:sz w:val="22"/><w:szCs w:val="22"/>' +
-    '</w:rPr><w:t xml:space="preserve">' + escapeXml(text) + '</w:t></w:r></w:p>';
+function mkSubBullet(text) {
+  return '<w:p><w:pPr><w:pStyle w:val="PargrafodaLista"/><w:numPr><w:ilvl w:val="1"/><w:numId w:val="15"/></w:numPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/><w:ind w:right="318" w:hanging="357"/><w:contextualSpacing w:val="0"/><w:jc w:val="both"/><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:pPr><w:r><w:rPr><w:rFonts w:asciiTheme="minorHAnsi" w:hAnsiTheme="minorHAnsi" w:cstheme="minorHAnsi"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr><w:t xml:space="preserve">' + esc(text) + '</w:t></w:r></w:p>';
 }
 
-// Convert section content text to proper XML paragraphs
 function contentToXml(text) {
   if (!text) return "";
   var lines = text.split("\n");
-  var result = "";
+  var out = "";
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i].trim();
     if (!line) continue;
-    if (line.indexOf(">> ") === 0) {
-      result += subBulletXml(line.substring(3).trim());
-    } else if (line.indexOf("- ") === 0) {
-      result += bulletXml(line.substring(2).trim());
-    } else {
-      result += bulletXml(line);
-    }
+    if (line.indexOf(">> ") === 0) out += mkSubBullet(line.substring(3).trim());
+    else if (line.indexOf("- ") === 0) out += mkBullet(line.substring(2).trim());
+    else out += mkBullet(line);
   }
-  return result;
+  return out;
 }
 
-function postProcessDocXml(xml, secoes) {
+// Build replacement XML for a full section (headline + bullets)
+function sectionToXml(titulo, conteudo) {
+  return mkHeadline(titulo) + contentToXml(conteudo);
+}
+
+// Extract text from a <w:p> XML string
+function extractText(pXml) {
+  var result = "";
+  var re = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+  var m;
+  while ((m = re.exec(pXml)) !== null) result += m[1];
+  return result.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
+}
+
+function postProcess(xml, secoes) {
   if (!secoes || secoes.length === 0) return xml;
 
-  // Strategy: find each {secoes} output block and replace the content paragraphs
-  // with properly formatted headline + bullet paragraphs.
-  //
-  // The docxtemplater with linebreaks:true puts \n as <w:br/> inside the same <w:p>,
-  // which means the title paragraph is correct (bold+border) but the content paragraph
-  // has all the text crammed into one paragraph with line breaks.
-  //
-  // We need to find each content paragraph (the one after a bold+border headline)
-  // and split it into individual bullet paragraphs.
+  // Process sections in REVERSE order to preserve offsets
+  for (var i = secoes.length - 1; i >= 0; i--) {
+    var titulo = secoes[i].titulo_secao || "";
+    var conteudo = secoes[i].conteudo_secao || "";
+    if (!titulo) continue;
 
-  for (var i = 0; i < secoes.length; i++) {
-    var s = secoes[i];
-    var titulo = s.titulo_secao || s.titulo || "";
-    var conteudo = s.conteudo_secao || "";
-    
-    if (!titulo || !conteudo) continue;
-    
-    // Find the headline paragraph in the rendered XML
-    var tituloEsc = escapeXml(titulo);
-    var titlePos = xml.indexOf(tituloEsc);
-    if (titlePos < 0) {
-      // Try without accents
-      tituloEsc = titulo.replace(/[áàãâ]/g, "a").replace(/[éèê]/g, "e").replace(/[íìî]/g, "i").replace(/[óòõô]/g, "o").replace(/[úùû]/g, "u");
-      tituloEsc = escapeXml(tituloEsc);
-      titlePos = xml.indexOf(tituloEsc);
+    // Find the title text in the XML
+    var searchText = esc(titulo);
+    var titleTextPos = xml.indexOf(searchText);
+    if (titleTextPos < 0) {
+      // Try first 20 chars
+      searchText = esc(titulo.substring(0, Math.min(20, titulo.length)));
+      titleTextPos = xml.indexOf(searchText);
     }
-    if (titlePos < 0) continue;
-    
-    // Find the paragraph containing the title
-    var titlePStart = xml.lastIndexOf("<w:p", titlePos);
-    var titlePEnd = xml.indexOf("</w:p>", titlePos) + 6;
-    
-    // The NEXT paragraph should be the content paragraph
+    if (titleTextPos < 0) continue;
+
+    // Find the enclosing <w:p> of the title
+    var titlePStart = xml.lastIndexOf("<w:p", titleTextPos);
+    var titlePEnd = xml.indexOf("</w:p>", titleTextPos) + 6;
+    if (titlePStart < 0 || titlePEnd < 6) continue;
+
+    // Find the NEXT <w:p> (the content paragraph)
     var contentPStart = xml.indexOf("<w:p", titlePEnd);
     if (contentPStart < 0) continue;
     var contentPEnd = xml.indexOf("</w:p>", contentPStart) + 6;
-    
-    // Verify this is actually a content paragraph (not another headline)
+    if (contentPEnd < 6) continue;
+
+    // Check: is the content paragraph another headline? If so, there's no content to replace
     var contentPar = xml.substring(contentPStart, contentPEnd);
-    if (contentPar.indexOf("w:pBdr") >= 0) continue; // skip if it's another headline
-    
-    // Replace the content paragraph with properly formatted bullet paragraphs
-    var newContent = contentToXml(conteudo);
-    if (newContent) {
-      xml = xml.substring(0, contentPStart) + newContent + xml.substring(contentPEnd);
+    var isNextHeadline = contentPar.indexOf("w:pBdr") >= 0 && contentPar.indexOf("<w:b/>") >= 0;
+
+    // Build the replacement
+    var newXml;
+    if (i === 0) {
+      // First section: the template already has the headline with correct formatting
+      // Just replace the content paragraph
+      if (isNextHeadline) {
+        // No content paragraph to replace, insert after headline
+        newXml = contentToXml(conteudo);
+        xml = xml.substring(0, titlePEnd) + newXml + xml.substring(titlePEnd);
+      } else {
+        newXml = contentToXml(conteudo);
+        xml = xml.substring(0, contentPStart) + newXml + xml.substring(contentPEnd);
+      }
+    } else {
+      // Subsequent sections: replace BOTH title paragraph + content paragraph
+      // with our properly formatted headline + bullets
+      var replaceEnd = isNextHeadline ? titlePEnd : contentPEnd;
+      newXml = sectionToXml(titulo, conteudo);
+      xml = xml.substring(0, titlePStart) + newXml + xml.substring(replaceEnd);
     }
   }
-  
+
   return xml;
 }
 
-// Fix pauta table: center text horizontally and set row height for vertical centering
-function fixPautaCentering(xml) {
-  xml = xml.replace(/<w:tr\b[^>]*>(?:(?!<\/w:tr>).)*<\/w:tr>/gs, function(match) {
-    // Check if this row contains time patterns (pauta rows like "16h30")
-    var isPautaRow = /\d{2}h\d{2}/.test(match);
-    var isApresentadorRow = /Apresenta/.test(match);
+// Fix pauta table: vertical centering of text within cells
+function fixPauta(xml) {
+  var pautaStart = xml.indexOf("PAUTA DA");
+  if (pautaStart < 0) return xml;
+  
+  var firstHeadline = xml.indexOf("w:pBdr", pautaStart);
+  if (firstHeadline < 0) firstHeadline = xml.length;
+  
+  var before = xml.substring(0, pautaStart);
+  var pautaBlock = xml.substring(pautaStart, firstHeadline);
+  var after = xml.substring(firstHeadline);
+  
+  // In pauta rows: ensure trHeight exists and vAlign=center in cells
+  pautaBlock = pautaBlock.replace(/<w:tr\b[^>]*>(?:(?!<\/w:tr>).)*<\/w:tr>/gs, function(match) {
+    var hasTime = /\d{2}h\d{2}/.test(match);
+    var hasApresentador = /Apresenta/.test(match);
+    if (!hasTime && !hasApresentador) return match;
     
-    if (!isPautaRow && !isApresentadorRow) return match;
-    
-    // Add trHeight for vertical centering to work
+    // Add row height for vertical centering to work
     if (match.indexOf("w:trHeight") < 0) {
       if (match.indexOf("<w:trPr>") >= 0) {
-        match = match.replace("<w:trPr>", '<w:trPr><w:trHeight w:val="567" w:hRule="atLeast"/>');
+        match = match.replace("<w:trPr>", '<w:trPr><w:trHeight w:val="454" w:hRule="atLeast"/>');
       } else {
-        // Insert trPr after <w:tr...>
-        match = match.replace(/(<w:tr\b[^>]*>)/, '$1<w:trPr><w:trHeight w:val="567" w:hRule="atLeast"/></w:trPr>');
+        match = match.replace(/(<w:tr\b[^>]*>)/, '$1<w:trPr><w:trHeight w:val="454" w:hRule="atLeast"/></w:trPr>');
       }
     }
     
-    // Change jc="both" to jc="center" for horizontal centering
-    match = match.replace(/<w:jc w:val="both"\/>/g, '<w:jc w:val="center"/>');
+    // Ensure vAlign=center in cell properties (vertical centering within cell)
+    match = match.replace(/<w:tcPr>((?:(?!<\/w:tcPr>).)*)<\/w:tcPr>/gs, function(tcMatch, tcInner) {
+      if (tcInner.indexOf("w:vAlign") < 0) {
+        return '<w:tcPr>' + tcInner + '<w:vAlign w:val="center"/></w:tcPr>';
+      }
+      return tcMatch;
+    });
     
-    // If no jc at all, add center to paragraph properties
-    if (match.indexOf("<w:jc") < 0 && match.indexOf("<w:pPr>") >= 0) {
-      match = match.replace(/<w:pPr>/g, '<w:pPr><w:jc w:val="center"/>');
-    }
+    // Do NOT change horizontal alignment - keep text left-aligned
     
     return match;
   });
   
-  return xml;
+  return before + pautaBlock + after;
 }
 
 async function generateSumula(data) {
@@ -174,7 +166,6 @@ async function generateSumula(data) {
 
   var content = fs.readFileSync(TEMPLATE_PATH, "binary");
   var zip = new PizZip(content);
-
   var doc = new Docxtemplater(zip, {
     paragraphLoop: true,
     linebreaks: true,
@@ -204,13 +195,16 @@ async function generateSumula(data) {
     anexos: data.anexos || []
   });
 
-  // Post-process XML
   var outputZip = doc.getZip();
   var docXml = outputZip.file("word/document.xml").asText();
-  docXml = postProcessDocXml(docXml, secoes);
-  docXml = fixPautaCentering(docXml);
+  
+  // 1. Fix sections (headlines + bullets) - reverse order to preserve offsets
+  docXml = postProcess(docXml, secoes);
+  
+  // 2. Fix pauta centering - scoped to pauta table only
+  docXml = fixPauta(docXml);
+  
   outputZip.file("word/document.xml", docXml);
-
   return outputZip.generate({ type: "nodebuffer", compression: "DEFLATE" });
 }
 

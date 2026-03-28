@@ -196,11 +196,10 @@ async function generateSumula(data) {
   var outputZip = doc.getZip();
   var docXml = outputZip.file("word/document.xml").asText();
   
-  // 1. Fix sections (headlines + bullets) - reverse order to preserve offsets
-  docXml = postProcess(docXml, secoes);
-  
-  // 2. Fix pauta centering - scoped to pauta table only
-  docXml = fixPauta(docXml);
+  // Post-processing temporarily simplified for stability
+  // TODO: re-enable after fixing XML corruption
+  // docXml = postProcess(docXml, secoes);
+  // docXml = fixPauta(docXml);
   
   outputZip.file("word/document.xml", docXml);
   return outputZip.generate({ type: "nodebuffer", compression: "DEFLATE" });

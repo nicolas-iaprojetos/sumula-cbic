@@ -93,6 +93,20 @@ function parseParagraphs(xml) {
 }
 
 // ============================================================
+// Helper: remove "Apresentação de" rows when apresentador is empty
+// ============================================================
+function cleanEmptyApresentador(xml) {
+  var paras = parseParagraphs(xml);
+  for (var i = paras.length - 1; i >= 0; i--) {
+    var t = paras[i].text;
+    if (/^Apresenta..o de\s*$/.test(t)) {
+      xml = xml.substring(0, paras[i].start) + xml.substring(paras[i].end);
+    }
+  }
+  return xml;
+}
+
+// ============================================================
 // postProcess: replace docxtemplater content with real bullets
 //
 // Strategy: find section headlines by TEXT MATCHING (not XML
@@ -216,7 +230,7 @@ function postProcess(xml, secoes) {
     var replaceFrom = paragraphs[headlineIdx].start;
     var replaceTo = paragraphs[contentEnd - 1].end;
 
-    var spacerBefore = (h > 0) ? spacer : "";
+    var spacerBefore = spacer;
     var newXml = spacerBefore + headlineParaXml + spacer + bulletXml;
 
     xml = xml.substring(0, replaceFrom) + newXml + xml.substring(replaceTo);
@@ -415,6 +429,10 @@ async function generateSumula(data) {
   console.log("[generateSumula] " + secoes.length + " secoes (informes extracted: " + (informesText ? "yes" : "no") + ")");
   console.log("[generateSumula] pauta items: " + (data.pauta ? data.pauta.length : 0), JSON.stringify(data.pauta || []).substring(0, 500));
 
+  var pautaData = (data.pauta || []).map(function(p) {
+    return { horario: p.horario || '', titulo: (p.titulo || '').toUpperCase(), apresentador: p.apresentador || '' };
+  });
+
   var hasImages = data.anexo_images && data.anexo_images.length > 0;
 
   doc.render({
@@ -427,7 +445,7 @@ async function generateSumula(data) {
     titulo_reuniao: data.titulo_reuniao || "",
     ano: data.ano || String(new Date().getFullYear()),
     informes: informesText,
-    pauta: data.pauta || [],
+    pauta: pautaData,
     secoes: secoes,
     quorum: data.quorum || [],
     anexos: data.anexos || []
@@ -436,7 +454,9 @@ async function generateSumula(data) {
   var outputZip = doc.getZip();
   var docXml = outputZip.file("word/document.xml").asText();
 
+  docXml = cleanEmptyApresentador(docXml);
   docXml = postProcess(docXml, secoes);
+  docXml = docXml.replace(/\\'/g, "'");
 
   if (hasImages) {
     docXml = insertAnexoImages(outputZip, docXml, data.anexo_images);

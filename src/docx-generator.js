@@ -67,6 +67,7 @@ function postProcess(xml, secoes) {
   }
   console.log("[postProcess] Found " + positions.length + " FIX00004 for " + secoes.length + " secoes");
   if (positions.length === 0) return xml;
+  var firstSectionStart = -1;
   for (var i = positions.length - 1; i >= 0; i--) {
     if (i >= secoes.length) continue;
     var conteudo = secoes[i].conteudo_secao || "";
@@ -81,6 +82,18 @@ function postProcess(xml, secoes) {
     if (!bulletXml) continue;
     console.log("[postProcess] Replacing secao " + i);
     xml = xml.substring(0, pStart) + bulletXml + xml.substring(pEnd);
+    if (i === 0) firstSectionStart = pStart;
+  }
+  // Add spacing before the first section heading
+  if (firstSectionStart >= 0) {
+    var headingEnd = xml.lastIndexOf("</w:p>", firstSectionStart);
+    if (headingEnd >= 0) {
+      var headingStart = xml.lastIndexOf("<w:p ", headingEnd);
+      if (headingStart >= 0) {
+        var spacer = '<w:p><w:pPr><w:spacing w:before="480"/></w:pPr></w:p>';
+        xml = xml.substring(0, headingStart) + spacer + xml.substring(headingStart);
+      }
+    }
   }
   return xml;
 }

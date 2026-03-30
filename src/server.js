@@ -8,6 +8,7 @@ const db = require("./database");
 const { generateSumula } = require("./docx-generator");
 const { extractDocxText } = require("./docx-reader");
 const { matchAttendance } = require("./attendance-matcher");
+const { convertToImages } = require("./slide-converter");
 
 // Global error handlers (prevent silent crashes)
 process.on("uncaughtException", (err) => {
@@ -118,6 +119,36 @@ app.post("/api/extract-text", upload.single("file"), async (req, res) => {
   }
 });
 
+// ── Upload Slides ──
+var slidesDir = path.join(__dirname, "../data/slides");
+fs.mkdirSync(slidesDir, { recursive: true });
+app.use("/data/slides", express.static(slidesDir));
+
+app.post("/api/upload-slides", upload.single("slides"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "Nenhum arquivo enviado" });
+    var images = convertToImages(req.file.path, req.file.originalname);
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
+    var batch = "slides_" + Date.now();
+    var batchDir = path.join(slidesDir, batch);
+    fs.mkdirSync(batchDir, { recursive: true });
+
+    var result = [];
+    for (var i = 0; i < images.length; i++) {
+      var fname = "slide_" + (i + 1) + "." + (images[i].ext || "png");
+      var fpath = path.join(batchDir, fname);
+      fs.writeFileSync(fpath, images[i].data);
+      result.push({ path: "data/slides/" + batch + "/" + fname, width: images[i].width, height: images[i].height });
+    }
+    res.json({ images: result });
+  } catch (err) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    console.error("[upload-slides]", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Generate Sumula DOCX ──
 app.post("/api/generate-sumula", async (req, res) => {
   try {
@@ -129,6 +160,21 @@ app.post("/api/generate-sumula", async (req, res) => {
       var quorum = db.getQuorum(gtId, parseInt(ano));
       if (quorum.length > 0) data.quorum = quorum;
       data.ano = ano;
+    }
+
+    // Convert anexo_images paths to Buffer objects for docx-generator
+    if (data.anexo_images && data.anexo_images.length > 0) {
+      var resolvedImages = [];
+      for (var ai = 0; ai < data.anexo_images.length; ai++) {
+        var imgPath = path.join(__dirname, "..", data.anexo_images[ai]);
+        if (fs.existsSync(imgPath)) {
+          var imgData = fs.readFileSync(imgPath);
+          var w = imgData.length > 24 ? imgData.readUInt32BE(16) : 800;
+          var h = imgData.length > 24 ? imgData.readUInt32BE(20) : 600;
+          resolvedImages.push({ data: imgData, width: w, height: h, ext: "png" });
+        }
+      }
+      data.anexo_images = resolvedImages;
     }
 
     var buffer = await generateSumula(data);

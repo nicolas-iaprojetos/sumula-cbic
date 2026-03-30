@@ -362,21 +362,24 @@ ${reuniao.pauta_texto ? "\nPAUTA PRÉ-DEFINIDA:\n" + reuniao.pauta_texto : ""}
 TRANSCRIÇÃO:
 ${transcricao.substring(0, 15000)}
 
-Responda SOMENTE em JSON puro (sem markdown, sem backticks). Use esta estrutura:
-{"informes":"Parágrafo de abertura longo e formal conforme instruções acima","quadro_pautas":[{"horario":"16h00 – 16h05","titulo":"Abertura e Boas-Vindas","apresentador":"Sr. Ilso Oliveira"}],"secoes":[{"titulo":"ABERTURA E BOAS-VINDAS","bullets":["- Bullet point longo e detalhado com 2-4 frases no estilo institucional.","- Segundo bullet com conteúdo substancial.",">> Sub-bullet com circunferência vazia para listas internas."]}],"encerramento":"Texto da seção Palavra Aberta e Encerramento","proxima_reuniao":"Data se mencionada"}`;
+Responda SOMENTE em JSON puro (sem markdown, sem backticks). A última seção do array secoes DEVE ser PALAVRA ABERTA E ENCERRAMENTO com bullets detalhados. Use esta estrutura:
+{"secoes":[{"titulo":"INFORMES","bullets":["Bullet de informe"]},{"titulo":"TÍTULO IDÊNTICO AO DA PAUTA","bullets":["Bullet detalhado com 2-3 frases.",">> Sub-bullet de nível 1"]},{"titulo":"PALAVRA ABERTA E ENCERRAMENTO","bullets":["Bullet detalhado sobre os comentários finais e encerramento."]}]}`;
       const txt = await callAI(aiSettings, [{ role: "user", content: prompt }]);
       const parsed = JSON.parse(txt.replace(/```json|```/g, "").trim());
       // Extrair encerramento
-      function extrairEncerramento(secoes) {
-        if (!Array.isArray(secoes)) return { secoes: secoes || [], encerramento: { titulo: 'PALAVRA ABERTA E ENCERRAMENTO', bullets: ['Não havendo mais manifestações, o Presidente agradeceu a participação de todos e encerrou a reunião.'] } };
-        const idx = secoes.findIndex(function(s) { return /palavra aberta|encerramento/i.test(s.titulo || ''); });
+      function extrairEncerramento(parsed) {
+        var secoes = Array.isArray(parsed.secoes) ? parsed.secoes : [];
+        var idx = secoes.findIndex(function(s) { return /palavra aberta|encerramento/i.test(s.titulo || ''); });
         if (idx >= 0) {
-          const enc = secoes.splice(idx, 1)[0];
+          var enc = secoes.splice(idx, 1)[0];
           return { secoes: secoes, encerramento: { titulo: enc.titulo, bullets: enc.bullets || [] } };
+        }
+        if (parsed.encerramento && parsed.encerramento.trim()) {
+          return { secoes: secoes, encerramento: { titulo: 'PALAVRA ABERTA E ENCERRAMENTO', bullets: [parsed.encerramento.trim()] } };
         }
         return { secoes: secoes, encerramento: { titulo: 'PALAVRA ABERTA E ENCERRAMENTO', bullets: ['Não havendo mais manifestações, o Presidente agradeceu a participação de todos e encerrou a reunião.'] } };
       }
-      const resultado = extrairEncerramento(parsed.secoes);
+      const resultado = extrairEncerramento(parsed);
       parsed.secoes = resultado.secoes;
       parsed._encerramento = resultado.encerramento;
       // Garantir encerramento como última seção
@@ -398,20 +401,15 @@ Responda SOMENTE em JSON puro (sem markdown, sem backticks). Use esta estrutura:
     t += `Participantes: Presidente da COIC/CBIC, membros do ${gt?.nome || "GT"} e Gestor de Projetos da COIC/CBIC.\n`;
     t += `Áreas: COIC – Comissão de Obras Industriais e Corporativas\n`;
     t += `Objetivo: ${reuniao.edicao ? reuniao.edicao + " — " : ""}${nomeR}\n`;
-    t += `\n${"═".repeat(56)}\n\nINFORMES\n\n${sumula.informes}\n\n`;
-    // Quadro de pautas
-    t += `${"─".repeat(56)}\n`;
-    t += `PAUTA DA ${(reuniao.edicao || "").toUpperCase()} ${nomeR.toUpperCase()}\n`;
-    t += `${"─".repeat(56)}\n`;
-    sumula.quadro_pautas?.forEach((p) => { t += `${p.horario} | ${p.titulo}\nApresentação de ${p.apresentador}\n\n`; });
-    t += `${"─".repeat(56)}\n\n`;
-    // Seções
+    t += `\n${"═".repeat(56)}\n\n`;
+    // Seções (inclui INFORMES como primeira e ENCERRAMENTO como última)
     sumula.secoes?.forEach((s) => {
       t += `${s.titulo}\n\n`;
-      s.bullets?.forEach((b) => { t += `  • ${b}\n\n`; });
+      s.bullets?.forEach((b) => {
+        if (b.indexOf('>> ') === 0) t += `    ◦ ${b.substring(3)}\n\n`;
+        else t += `  • ${b}\n\n`;
+      });
     });
-    // Encerramento
-    if (sumula.encerramento) t += `\n${sumula.encerramento}\n\n`;
     // Quórum
     t += `${"─".repeat(56)}\nQUÓRUM\n\n`;
     t += `${"Nome".padEnd(30)}${"Empresa".padEnd(20)}Presença\n`;
@@ -421,7 +419,6 @@ Responda SOMENTE em JSON puro (sem markdown, sem backticks). Use esta estrutura:
     t += `${"─".repeat(56)}\n`;
     t += `As contribuições e retificações a esta súmula devem ser enviadas para coic@cbic.org.br, preferencialmente, em até 48 horas após o seu recebimento. A não manifestação implica na aceitação da Súmula.\n\n`;
     t += `Súmula elaborada por:\nAlexandre Nícolas Dantas dos Santos\nGestor de Projetos da COIC\n`;
-    if (sumula.proxima_reuniao) t += `\nPróxima reunião: ${sumula.proxima_reuniao}\n`;
     return t;
   };
 
@@ -567,27 +564,16 @@ Responda SOMENTE em JSON puro (sem markdown, sem backticks). Use esta estrutura:
           </div>
           <div style={{ marginTop: 8 }}><span style={{ fontWeight: 500 }}>Objetivo:</span> {reuniao.edicao ? reuniao.edicao + " — " : ""}{reuniao.nome || "Reunião do " + gt?.nome}</div>
         </div>
-        {/* Informes */}
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 8, borderBottom: "0.5px solid var(--color-border-tertiary)", paddingBottom: 6 }}>Informes</div>
-          <div style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.8 }}>{sumula.informes}</div>
-        </div>
-        {/* Quadro de pautas */}
-        {sumula.quadro_pautas?.length > 0 && (
-          <div style={{ marginBottom: 16, background: "var(--color-background-secondary)", borderRadius: "var(--border-radius-md)", padding: "12px 16px" }}>
-            <div style={{ fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--color-text-tertiary)", marginBottom: 8 }}>Pauta da {reuniao.edicao || ""} {reuniao.nome || gt?.nome}</div>
-            {sumula.quadro_pautas.map((p, i) => (<div key={i} style={{ marginBottom: 8, fontSize: 13 }}><div style={{ fontWeight: 500 }}>{p.horario} | {p.titulo}</div><div style={{ fontSize: 12, color: "var(--color-text-tertiary)" }}>Apresentação de {p.apresentador}</div></div>))}
-          </div>
-        )}
-        {/* Seções */}
+        {/* Seções (inclui INFORMES e ENCERRAMENTO) */}
         {sumula.secoes?.map((s, i) => (
           <div key={i} style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 500, textTransform: "uppercase", marginBottom: 8 }}>{s.titulo}</div>
-            {s.bullets?.map((b, j) => (<div key={j} style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.8, marginBottom: 8, paddingLeft: 16, position: "relative" }}><span style={{ position: "absolute", left: 0 }}>•</span>{b}</div>))}
+            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 8, borderBottom: "0.5px solid var(--color-border-tertiary)", paddingBottom: 6, textTransform: "uppercase" }}>{s.titulo}</div>
+            {s.bullets?.map((b, j) => {
+              const isSub = b.indexOf('>> ') === 0;
+              return (<div key={j} style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.8, marginBottom: 8, paddingLeft: isSub ? 32 : 16, position: "relative" }}><span style={{ position: "absolute", left: isSub ? 16 : 0 }}>{isSub ? '◦' : '•'}</span>{isSub ? b.substring(3) : b}</div>);
+            })}
           </div>
         ))}
-        {/* Encerramento */}
-        {sumula.encerramento && <div style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.8, marginBottom: 16 }}>{sumula.encerramento}</div>}
         {/* Quórum */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>Quórum</div>
@@ -665,7 +651,7 @@ Responda SOMENTE em JSON puro (sem markdown, sem backticks). Use esta estrutura:
     </div>
   )}
 </div>
-<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}><button onClick={async () => { setLoading(true); setError(""); try { var fmtDate = function(d) { if (!d) return ""; if (d.indexOf("/") >= 0) return d; var p = d.split("-"); return p.length === 3 ? p[2]+"/"+p[1]+"/"+p[0] : d; }; var hi = reuniao.horario ? reuniao.horario.split(" às ")[0] || "16h00" : "16h00"; var hf = reuniao.horario ? reuniao.horario.split(" às ")[1] || "18h00" : "18h00"; try { var meetResp = await fetch("/api/gts/" + selGtId + "/reunioes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: reuniao.nome || gt.nome, edicao: reuniao.edicao || "", data: reuniao.data, horario: reuniao.horario, local: reuniao.local }) }); var meetData = await meetResp.json(); if (meetData.id) { await fetch("/api/reunioes/" + meetData.id + "/presencas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ presencas: presencas }) }); } } catch(e) { console.log("Nao salvou reuniao:", e); } var qr = gt?.membros ? gt.membros.map(function(m) { return { nome: m.nome_completo || m.nome, entidade: m.empresa || "", total_reunioes: "1", presencas: presencas[m.id] ? "1" : "0", percentual: presencas[m.id] ? "100%" : "0%" }; }) : []; var resp = await fetch("/api/generate-sumula", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ data: { data: fmtDate(reuniao.data), horario_inicio: hi, horario_fim: hf, local: reuniao.local, objetivo: (reuniao.edicao || "") + " " + (reuniao.nome || gt?.nome || "Reunião"), numero_reuniao: reuniao.edicao ? (reuniao.edicao.match(/\d+/) || [""])[0] : "", titulo_reuniao: (reuniao.nome || gt?.nome || "REUNIÃO").toUpperCase(), informes: sumula?.informes || "", pauta: sumula?.quadro_pautas || [], secoes: (sumula?.secoes || []).map(function(s) { return { titulo_secao: s.titulo || s.titulo_secao || "", conteudo_secao: s.conteudo_secao || (s.bullets ? s.bullets.join("\n") : "") }; }), quorum: qr, ano: String(new Date().getFullYear()), anexo_images: slideImages.map(function(img) { return img.path || img; }) }, gtId: selGtId }) }); if (!resp.ok) throw new Error("Erro ao gerar Word"); var blob = await resp.blob(); var url = URL.createObjectURL(blob); var a = document.createElement("a"); a.href = url; a.download = "Sumula_" + (reuniao.edicao || "reuniao") + "_" + fmtDate(reuniao.data).replace(/\//g, "-") + ".docx"; a.click(); URL.revokeObjectURL(url); setSlideImages([]); setSlideFile(null); if (slideRef.current) slideRef.current.value = ''; } catch(err) { setError("Erro: " + err.message); } finally { setLoading(false); } }} disabled={loading} style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, borderRadius: "var(--border-radius-lg)", opacity: loading ? 0.5 : 1 }}><Ic d={ic.download} size={24} /><span style={{ fontSize: 13, fontWeight: 500 }}>{loading ? "Gerando..." : "Baixar Word"}</span><span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>Template CBIC</span></button><button onClick={() => { var t = exportarTexto(); if (t) { navigator.clipboard.writeText(t); setCopied(true); setTimeout(function() { setCopied(false); }, 2000); } }} style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, borderRadius: "var(--border-radius-lg)" }}><Ic d={copied ? ic.check : ic.clipboard} size={24} /><span style={{ fontSize: 13, fontWeight: 500 }}>{copied ? "Copiado!" : "Copiar texto"}</span><span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>Para e-mail</span></button></div><div style={{ background: "var(--color-background-secondary)", borderRadius: "var(--border-radius-md)", padding: "12px 16px" }}><div style={{ fontSize: 12, color: "var(--color-text-tertiary)", marginBottom: 6 }}>Prévia</div><pre style={{ fontSize: 11, fontFamily: "var(--font-mono)", whiteSpace: "pre-wrap", lineHeight: 1.6, color: "var(--color-text-secondary)", maxHeight: 280, overflow: "auto", margin: 0 }}>{exportarTexto()}</pre></div></>)}</div>)}
+<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}><button onClick={async () => { setLoading(true); setError(""); try { var fmtDate = function(d) { if (!d) return ""; if (d.indexOf("/") >= 0) return d; var p = d.split("-"); return p.length === 3 ? p[2]+"/"+p[1]+"/"+p[0] : d; }; var hi = reuniao.horario ? reuniao.horario.split(" às ")[0] || "16h00" : "16h00"; var hf = reuniao.horario ? reuniao.horario.split(" às ")[1] || "18h00" : "18h00"; try { var meetResp = await fetch("/api/gts/" + selGtId + "/reunioes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: reuniao.nome || gt.nome, edicao: reuniao.edicao || "", data: reuniao.data, horario: reuniao.horario, local: reuniao.local }) }); var meetData = await meetResp.json(); if (meetData.id) { await fetch("/api/reunioes/" + meetData.id + "/presencas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ presencas: presencas }) }); } } catch(e) { console.log("Nao salvou reuniao:", e); } var qr = gt?.membros ? gt.membros.map(function(m) { return { nome: m.nome_completo || m.nome, entidade: m.empresa || "", total_reunioes: "1", presencas: presencas[m.id] ? "1" : "0", percentual: presencas[m.id] ? "100%" : "0%" }; }) : []; var resp = await fetch("/api/generate-sumula", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ data: { data: fmtDate(reuniao.data), horario_inicio: hi, horario_fim: hf, local: reuniao.local, objetivo: (reuniao.edicao || "") + " " + (reuniao.nome || gt?.nome || "Reunião"), numero_reuniao: reuniao.edicao ? (reuniao.edicao.match(/\d+/) || [""])[0] : "", titulo_reuniao: (reuniao.nome || gt?.nome || "REUNIÃO").toUpperCase(), informes: "", pauta: [], secoes: (sumula?.secoes || []).map(function(s) { return { titulo_secao: s.titulo || s.titulo_secao || "", conteudo_secao: s.conteudo_secao || (s.bullets ? s.bullets.join("\n") : "") }; }), quorum: qr, ano: String(new Date().getFullYear()), anexo_images: slideImages.map(function(img) { return img.path || img; }) }, gtId: selGtId }) }); if (!resp.ok) throw new Error("Erro ao gerar Word"); var blob = await resp.blob(); var url = URL.createObjectURL(blob); var a = document.createElement("a"); a.href = url; a.download = "Sumula_" + (reuniao.edicao || "reuniao") + "_" + fmtDate(reuniao.data).replace(/\//g, "-") + ".docx"; a.click(); URL.revokeObjectURL(url); setSlideImages([]); setSlideFile(null); if (slideRef.current) slideRef.current.value = ''; } catch(err) { setError("Erro: " + err.message); } finally { setLoading(false); } }} disabled={loading} style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, borderRadius: "var(--border-radius-lg)", opacity: loading ? 0.5 : 1 }}><Ic d={ic.download} size={24} /><span style={{ fontSize: 13, fontWeight: 500 }}>{loading ? "Gerando..." : "Baixar Word"}</span><span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>Template CBIC</span></button><button onClick={() => { var t = exportarTexto(); if (t) { navigator.clipboard.writeText(t); setCopied(true); setTimeout(function() { setCopied(false); }, 2000); } }} style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, borderRadius: "var(--border-radius-lg)" }}><Ic d={copied ? ic.check : ic.clipboard} size={24} /><span style={{ fontSize: 13, fontWeight: 500 }}>{copied ? "Copiado!" : "Copiar texto"}</span><span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>Para e-mail</span></button></div><div style={{ background: "var(--color-background-secondary)", borderRadius: "var(--border-radius-md)", padding: "12px 16px" }}><div style={{ fontSize: 12, color: "var(--color-text-tertiary)", marginBottom: 6 }}>Prévia</div><pre style={{ fontSize: 11, fontFamily: "var(--font-mono)", whiteSpace: "pre-wrap", lineHeight: 1.6, color: "var(--color-text-secondary)", maxHeight: 280, overflow: "auto", margin: 0 }}>{exportarTexto()}</pre></div></>)}</div>)}
 
       <div style={{ marginTop: "1.5rem", paddingTop: "0.75rem", borderTop: "0.5px solid var(--color-border-tertiary)", fontSize: 11, color: "var(--color-text-tertiary)", textAlign: "center" }}>Gestor de Projetos COIC — coic@cbic.org.br</div>
     </div>

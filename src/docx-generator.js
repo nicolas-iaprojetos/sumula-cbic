@@ -70,18 +70,22 @@ function postProcess(xml, secoes) {
   }
 
   // Identify headlines: paragraphs with BOTH w:pBdr AND w:b in rPr
-  var headlines = [];
+  var allHeadlines = [];
   for (var i = 0; i < paragraphs.length; i++) {
     var p = paragraphs[i].text;
     if (p.indexOf("w:pBdr") >= 0 && p.indexOf("<w:b/>") >= 0) {
-      headlines.push(i);
+      allHeadlines.push(i);
     }
   }
 
-  console.log("[postProcess] Found " + headlines.length + " headlines for " + secoes.length + " secoes");
+  // Skip the first headline (INFORMES) — its content is filled by docxtemplater, not postProcess
+  var headlines = allHeadlines.slice(1);
+
+  console.log("[postProcess] Found " + allHeadlines.length + " headlines total, processing " + headlines.length + " (skipped INFORMES) for " + secoes.length + " secoes");
+
+  var spacer = '<w:p><w:pPr><w:spacing w:after="120"/></w:pPr></w:p>';
 
   // Replace the paragraph AFTER each headline with bullet XML (iterate backwards)
-  var firstSectionStart = -1;
   for (var h = headlines.length - 1; h >= 0; h--) {
     if (h >= secoes.length) continue;
     var contentIdx = headlines[h] + 1;
@@ -92,18 +96,9 @@ function postProcess(xml, secoes) {
     var bulletXml = contentToXml(conteudo);
     if (!bulletXml) continue;
     console.log("[postProcess] Replacing secao " + h + " (headline at paragraph " + headlines[h] + ")");
-    xml = xml.substring(0, target.start) + bulletXml + xml.substring(target.end);
-    if (h === 0) firstSectionStart = target.start;
-  }
-
-  // Add spacing before the first section heading
-  if (firstSectionStart >= 0 && headlines.length > 0) {
-    var headingText = paragraphs[headlines[0]].text;
-    var headingPos = xml.indexOf(headingText);
-    if (headingPos >= 0) {
-      var spacer = '<w:p><w:pPr><w:spacing w:before="480"/></w:pPr></w:p>';
-      xml = xml.substring(0, headingPos) + spacer + xml.substring(headingPos);
-    }
+    var headlinePara = paragraphs[headlines[h]];
+    var insertBefore = (h > 0) ? spacer : '';
+    xml = xml.substring(0, headlinePara.start) + insertBefore + headlinePara.text + spacer + bulletXml + xml.substring(target.end);
   }
 
   return xml;
@@ -180,8 +175,26 @@ function insertAnexoImages(zip, xml, images) {
   }
   zip.file(ctPath, ctXml);
 
+  function mkImageDrawing(rIdStr, wEmu, hEmu, docPrId, mediaName) {
+    return '<w:r><w:rPr><w:noProof/></w:rPr>' +
+      '<w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">' +
+      '<wp:extent cx="' + wEmu + '" cy="' + hEmu + '"/>' +
+      '<wp:docPr id="' + docPrId + '" name="Anexo ' + docPrId + '"/>' +
+      '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">' +
+      '<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+      '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+      '<pic:nvPicPr><pic:cNvPr id="' + docPrId + '" name="' + mediaName + '"/><pic:cNvPicPr/></pic:nvPicPr>' +
+      '<pic:blipFill><a:blip r:embed="' + rIdStr + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
+      '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + wEmu + '" cy="' + hEmu + '"/></a:xfrm>' +
+      '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
+      '</pic:pic></a:graphicData></a:graphic>' +
+      '</wp:inline></w:drawing></w:r>';
+  }
+
   var imagesXml = "";
   var newRels = "";
+  var maxWidthEmu = 5760000;  // 16cm full width
+  var maxHeightEmu = 4800000; // ~13cm max height to fit ~2 per page
 
   for (var i = 0; i < images.length; i++) {
     var img = images[i];
@@ -197,14 +210,11 @@ function insertAnexoImages(zip, xml, images) {
     // Add relationship
     newRels += '<Relationship Id="' + rIdStr + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/' + mediaName + '"/>';
 
-    // Calculate EMU dimensions (1 inch = 914400 EMU)
-    // Target: fit within page width (~16cm = ~5760000 EMU) maintaining aspect ratio
-    var maxWidthEmu = 5760000;
-    var maxHeightEmu = 7680000;
-    var wEmu = (img.width || 800) * 9525; // pixels to EMU (96 DPI)
+    // Calculate EMU dimensions (1 inch = 914400 EMU, 1 pixel at 96 DPI = 9525 EMU)
+    var wEmu = (img.width || 800) * 9525;
     var hEmu = (img.height || 600) * 9525;
 
-    // Scale to fit
+    // Scale to fit page width, then cap height so ~2 fit per page
     if (wEmu > maxWidthEmu) {
       var scale = maxWidthEmu / wEmu;
       wEmu = Math.round(wEmu * scale);
@@ -216,26 +226,9 @@ function insertAnexoImages(zip, xml, images) {
       hEmu = Math.round(hEmu * scale2);
     }
 
-    // Build image paragraph XML
-    imagesXml += '<w:p><w:pPr><w:jc w:val="center"/></w:pPr>' +
-      '<w:r><w:rPr><w:noProof/></w:rPr>' +
-      '<w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">' +
-      '<wp:extent cx="' + wEmu + '" cy="' + hEmu + '"/>' +
-      '<wp:docPr id="' + (100 + i) + '" name="Anexo ' + (i + 1) + '"/>' +
-      '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">' +
-      '<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
-      '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
-      '<pic:nvPicPr><pic:cNvPr id="' + (100 + i) + '" name="' + mediaName + '"/><pic:cNvPicPr/></pic:nvPicPr>' +
-      '<pic:blipFill><a:blip r:embed="' + rIdStr + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
-      '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + wEmu + '" cy="' + hEmu + '"/></a:xfrm>' +
-      '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
-      '</pic:pic></a:graphicData></a:graphic>' +
-      '</wp:inline></w:drawing></w:r></w:p>';
-
-    // Add page break between images (not after the last one)
-    if (i < images.length - 1) {
-      imagesXml += '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
-    }
+    // Each image in a centered paragraph with small spacing — Word breaks pages automatically
+    imagesXml += '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="120"/></w:pPr>' +
+      mkImageDrawing(rIdStr, wEmu, hEmu, 100 + i, mediaName) + '</w:p>';
   }
 
   // Insert relationships

@@ -366,7 +366,7 @@ TRANSCRIÇÃO:
 ${transcricao.substring(0, 15000)}
 
 Responda SOMENTE em JSON puro (sem markdown, sem backticks). A última seção do array secoes DEVE ser PALAVRA ABERTA E ENCERRAMENTO com bullets detalhados. Use esta estrutura:
-{"secoes":[{"titulo":"INFORMES","bullets":["Bullet de informe"]},{"titulo":"TÍTULO IDÊNTICO AO DA PAUTA","bullets":["Bullet detalhado com 2-3 frases.",">> Sub-bullet de nível 1"]},{"titulo":"PALAVRA ABERTA E ENCERRAMENTO","bullets":["Bullet detalhado sobre os comentários finais e encerramento."]}]}`;
+{"secoes":[{"titulo":"ABERTURA E BOAS-VINDAS","bullets":["Bullet descrevendo a abertura da reunião."]},{"titulo":"TÍTULO IDÊNTICO AO DA PAUTA","bullets":["Bullet detalhado com 2-3 frases.",">> Sub-bullet de nível 1"]},{"titulo":"PALAVRA ABERTA E ENCERRAMENTO","bullets":["Bullet detalhado sobre os comentários finais e encerramento."]}]}`;
       const txt = await callAI(aiSettings, [{ role: "user", content: prompt }]);
       const parsed = JSON.parse(txt.replace(/```json|```/g, "").trim());
       // Extrair encerramento

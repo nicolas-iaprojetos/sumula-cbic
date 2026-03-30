@@ -241,7 +241,7 @@ function postProcess(xml, secoes) {
     var replaceTo = paragraphs[contentEnd - 1].end;
 
     var spacerBefore = spacer;
-    var newXml = spacerBefore + headlineParaXml + spacer + bulletXml;
+    var newXml = spacerBefore + headlineParaXml + bulletXml;
 
     xml = xml.substring(0, replaceFrom) + newXml + xml.substring(replaceTo);
 

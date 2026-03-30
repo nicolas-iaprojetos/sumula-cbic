@@ -261,6 +261,10 @@ function SumulasApp() {
   const [aiSettings, setAiSettings] = useState({ provider: "anthropic", model: "claude-sonnet-4-20250514", apiKey: "", instructions: DEFAULT_INSTRUCTIONS });
   const [showApiKey, setShowApiKey] = useState(false);
   const excelRef = useRef(null); const docRef = useRef(null);
+  const slideRef = useRef(null);
+  const [slideImages, setSlideImages] = useState([]);
+  const [slideFile, setSlideFile] = useState(null);
+  const [slideLoading, setSlideLoading] = useState(false);
 
   useEffect(() => { (async () => {
     try { const r = await fetch('/api/gts'); const data = await r.json(); if (Array.isArray(data) && data.length) { setGts(data.map(g => ({ ...g, membros: [] }))); setLoaded(true); return; } } catch {}
@@ -348,7 +352,23 @@ ${transcricao.substring(0, 15000)}
 Responda SOMENTE em JSON puro (sem markdown, sem backticks). Use esta estrutura:
 {"informes":"Parágrafo de abertura longo e formal conforme instruções acima","quadro_pautas":[{"horario":"16h00 – 16h05","titulo":"Abertura e Boas-Vindas","apresentador":"Sr. Ilso Oliveira"}],"secoes":[{"titulo":"ABERTURA E BOAS-VINDAS","bullets":["- Bullet point longo e detalhado com 2-4 frases no estilo institucional.","- Segundo bullet com conteúdo substancial.",">> Sub-bullet com circunferência vazia para listas internas."]}],"encerramento":"Texto da seção Palavra Aberta e Encerramento","proxima_reuniao":"Data se mencionada"}`;
       const txt = await callAI(aiSettings, [{ role: "user", content: prompt }]);
-      setSumula(JSON.parse(txt.replace(/```json|```/g, "").trim()));
+      const parsed = JSON.parse(txt.replace(/```json|```/g, "").trim());
+      // Extrair encerramento
+      function extrairEncerramento(secoes) {
+        if (!Array.isArray(secoes)) return { secoes: secoes || [], encerramento: { titulo: 'PALAVRA ABERTA E ENCERRAMENTO', bullets: ['Não havendo mais manifestações, o Presidente agradeceu a participação de todos e encerrou a reunião.'] } };
+        const idx = secoes.findIndex(function(s) { return /palavra aberta|encerramento/i.test(s.titulo || ''); });
+        if (idx >= 0) {
+          const enc = secoes.splice(idx, 1)[0];
+          return { secoes: secoes, encerramento: { titulo: enc.titulo, bullets: enc.bullets || [] } };
+        }
+        return { secoes: secoes, encerramento: { titulo: 'PALAVRA ABERTA E ENCERRAMENTO', bullets: ['Não havendo mais manifestações, o Presidente agradeceu a participação de todos e encerrou a reunião.'] } };
+      }
+      const resultado = extrairEncerramento(parsed.secoes);
+      parsed.secoes = resultado.secoes;
+      parsed._encerramento = resultado.encerramento;
+      // Garantir encerramento como última seção
+      parsed.secoes.push(parsed._encerramento);
+      setSumula(parsed);
       setTab(3);
     } catch (err) { setError("Erro: " + err.message); }
     finally { setLoading(false); }
@@ -573,7 +593,66 @@ Responda SOMENTE em JSON puro (sem markdown, sem backticks). Use esta estrutura:
         </div>
       </div>)}</div>)}
 
-      {tab === 4 && (<div>{!sumula ? (<div style={{ textAlign: "center", padding: "3rem", color: "var(--color-text-tertiary)" }}>Nenhuma súmula para exportar.</div>) : (<><h2 style={{ fontSize: 16, fontWeight: 500, marginBottom: 16 }}>Exportar</h2><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}><button onClick={async () => { setLoading(true); setError(""); try { var fmtDate = function(d) { if (!d) return ""; if (d.indexOf("/") >= 0) return d; var p = d.split("-"); return p.length === 3 ? p[2]+"/"+p[1]+"/"+p[0] : d; }; var hi = reuniao.horario ? reuniao.horario.split(" às ")[0] || "16h00" : "16h00"; var hf = reuniao.horario ? reuniao.horario.split(" às ")[1] || "18h00" : "18h00"; try { var meetResp = await fetch("/api/gts/" + selGtId + "/reunioes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: reuniao.nome || gt.nome, edicao: reuniao.edicao || "", data: reuniao.data, horario: reuniao.horario, local: reuniao.local }) }); var meetData = await meetResp.json(); if (meetData.id) { await fetch("/api/reunioes/" + meetData.id + "/presencas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ presencas: presencas }) }); } } catch(e) { console.log("Nao salvou reuniao:", e); } var qr = gt?.membros ? gt.membros.map(function(m) { return { nome: m.nome_completo || m.nome, entidade: m.empresa || "", total_reunioes: "1", presencas: presencas[m.id] ? "1" : "0", percentual: presencas[m.id] ? "100%" : "0%" }; }) : []; var resp = await fetch("/api/generate-sumula", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ data: { data: fmtDate(reuniao.data), horario_inicio: hi, horario_fim: hf, local: reuniao.local, objetivo: (reuniao.edicao || "") + " " + (reuniao.nome || gt?.nome || "Reunião"), numero_reuniao: reuniao.edicao ? (reuniao.edicao.match(/\d+/) || [""])[0] : "", titulo_reuniao: (reuniao.nome || gt?.nome || "REUNIÃO").toUpperCase(), informes: sumula?.informes || "", pauta: sumula?.quadro_pautas || [], secoes: (sumula?.secoes || []).map(function(s) { return { titulo_secao: s.titulo || s.titulo_secao || "", conteudo_secao: s.conteudo_secao || (s.bullets ? s.bullets.join("\n") : "") }; }), quorum: qr, ano: String(new Date().getFullYear()) }, gtId: selGtId }) }); if (!resp.ok) throw new Error("Erro ao gerar Word"); var blob = await resp.blob(); var url = URL.createObjectURL(blob); var a = document.createElement("a"); a.href = url; a.download = "Sumula_" + (reuniao.edicao || "reuniao") + "_" + fmtDate(reuniao.data).replace(/\//g, "-") + ".docx"; a.click(); URL.revokeObjectURL(url); } catch(err) { setError("Erro: " + err.message); } finally { setLoading(false); } }} disabled={loading} style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, borderRadius: "var(--border-radius-lg)", opacity: loading ? 0.5 : 1 }}><Ic d={ic.download} size={24} /><span style={{ fontSize: 13, fontWeight: 500 }}>{loading ? "Gerando..." : "Baixar Word"}</span><span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>Template CBIC</span></button><button onClick={() => { var t = exportarTexto(); if (t) { navigator.clipboard.writeText(t); setCopied(true); setTimeout(function() { setCopied(false); }, 2000); } }} style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, borderRadius: "var(--border-radius-lg)" }}><Ic d={copied ? ic.check : ic.clipboard} size={24} /><span style={{ fontSize: 13, fontWeight: 500 }}>{copied ? "Copiado!" : "Copiar texto"}</span><span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>Para e-mail</span></button></div><div style={{ background: "var(--color-background-secondary)", borderRadius: "var(--border-radius-md)", padding: "12px 16px" }}><div style={{ fontSize: 12, color: "var(--color-text-tertiary)", marginBottom: 6 }}>Prévia</div><pre style={{ fontSize: 11, fontFamily: "var(--font-mono)", whiteSpace: "pre-wrap", lineHeight: 1.6, color: "var(--color-text-secondary)", maxHeight: 280, overflow: "auto", margin: 0 }}>{exportarTexto()}</pre></div></>)}</div>)}
+      {tab === 4 && (<div>{!sumula ? (<div style={{ textAlign: "center", padding: "3rem", color: "var(--color-text-tertiary)" }}>Nenhuma súmula para exportar.</div>) : (<><h2 style={{ fontSize: 16, fontWeight: 500, marginBottom: 16 }}>Exportar</h2>
+<div style={{ marginBottom: '16px', padding: '16px', border: '2px dashed #ccc', borderRadius: '8px', backgroundColor: slideImages.length > 0 ? '#f0fff0' : '#fafafa' }}>
+  <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
+    Anexos — Upload de Apresentações (PPT/PDF)
+  </label>
+  <input
+    ref={slideRef}
+    type="file"
+    accept=".pptx,.ppt,.pdf"
+    style={{ display: 'none' }}
+    onChange={async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      setSlideFile(file);
+      setSlideLoading(true);
+      setSlideImages([]);
+      try {
+        const formData = new FormData();
+        formData.append('slides', file);
+        const resp = await fetch('/api/upload-slides', { method: 'POST', body: formData });
+        if (!resp.ok) throw new Error('Erro ' + resp.status);
+        const data = await resp.json();
+        setSlideImages(data.images || []);
+      } catch (err) {
+        console.error('[Upload]', err);
+        alert('Erro ao processar slides: ' + err.message);
+      } finally {
+        setSlideLoading(false);
+      }
+    }}
+  />
+  <button
+    type="button"
+    onClick={() => slideRef.current && slideRef.current.click()}
+    disabled={slideLoading}
+    style={{ padding: '8px 16px', backgroundColor: slideLoading ? '#ccc' : '#C41E3A', color: '#fff', border: 'none', borderRadius: '4px', cursor: slideLoading ? 'wait' : 'pointer', fontSize: '14px' }}
+  >
+    {slideLoading ? 'Convertendo slides...' : 'Selecionar arquivo (.pptx / .pdf)'}
+  </button>
+  {slideFile && !slideLoading && (
+    <span style={{ marginLeft: '12px', fontSize: '13px', color: '#555' }}>{slideFile.name}</span>
+  )}
+  {slideImages.length > 0 && (
+    <div style={{ marginTop: '12px' }}>
+      <p style={{ fontSize: '13px', color: '#4CAF50', margin: '0 0 8px' }}>{slideImages.length} slide(s) convertido(s)</p>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {slideImages.map((img, idx) => (
+          <div key={idx} style={{ border: '1px solid #ddd', borderRadius: '4px', overflow: 'hidden', width: '100px' }}>
+            <img src={'/' + (img.path || img)} alt={'Slide ' + (idx + 1)} style={{ width: '100%', height: '60px', objectFit: 'cover' }} />
+            <div style={{ fontSize: '10px', textAlign: 'center', padding: '2px', color: '#888' }}>Slide {idx + 1}</div>
+          </div>
+        ))}
+      </div>
+      <button type="button" onClick={() => { setSlideImages([]); setSlideFile(null); if (slideRef.current) slideRef.current.value = ''; }} style={{ marginTop: '8px', fontSize: '12px', color: '#C41E3A', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+        Remover anexos
+      </button>
+    </div>
+  )}
+</div>
+<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}><button onClick={async () => { setLoading(true); setError(""); try { var fmtDate = function(d) { if (!d) return ""; if (d.indexOf("/") >= 0) return d; var p = d.split("-"); return p.length === 3 ? p[2]+"/"+p[1]+"/"+p[0] : d; }; var hi = reuniao.horario ? reuniao.horario.split(" às ")[0] || "16h00" : "16h00"; var hf = reuniao.horario ? reuniao.horario.split(" às ")[1] || "18h00" : "18h00"; try { var meetResp = await fetch("/api/gts/" + selGtId + "/reunioes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome: reuniao.nome || gt.nome, edicao: reuniao.edicao || "", data: reuniao.data, horario: reuniao.horario, local: reuniao.local }) }); var meetData = await meetResp.json(); if (meetData.id) { await fetch("/api/reunioes/" + meetData.id + "/presencas", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ presencas: presencas }) }); } } catch(e) { console.log("Nao salvou reuniao:", e); } var qr = gt?.membros ? gt.membros.map(function(m) { return { nome: m.nome_completo || m.nome, entidade: m.empresa || "", total_reunioes: "1", presencas: presencas[m.id] ? "1" : "0", percentual: presencas[m.id] ? "100%" : "0%" }; }) : []; var resp = await fetch("/api/generate-sumula", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ data: { data: fmtDate(reuniao.data), horario_inicio: hi, horario_fim: hf, local: reuniao.local, objetivo: (reuniao.edicao || "") + " " + (reuniao.nome || gt?.nome || "Reunião"), numero_reuniao: reuniao.edicao ? (reuniao.edicao.match(/\d+/) || [""])[0] : "", titulo_reuniao: (reuniao.nome || gt?.nome || "REUNIÃO").toUpperCase(), informes: sumula?.informes || "", pauta: sumula?.quadro_pautas || [], secoes: (sumula?.secoes || []).map(function(s) { return { titulo_secao: s.titulo || s.titulo_secao || "", conteudo_secao: s.conteudo_secao || (s.bullets ? s.bullets.join("\n") : "") }; }), quorum: qr, ano: String(new Date().getFullYear()), anexo_images: slideImages.map(function(img) { return img.path || img; }) }, gtId: selGtId }) }); if (!resp.ok) throw new Error("Erro ao gerar Word"); var blob = await resp.blob(); var url = URL.createObjectURL(blob); var a = document.createElement("a"); a.href = url; a.download = "Sumula_" + (reuniao.edicao || "reuniao") + "_" + fmtDate(reuniao.data).replace(/\//g, "-") + ".docx"; a.click(); URL.revokeObjectURL(url); setSlideImages([]); setSlideFile(null); if (slideRef.current) slideRef.current.value = ''; } catch(err) { setError("Erro: " + err.message); } finally { setLoading(false); } }} disabled={loading} style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, borderRadius: "var(--border-radius-lg)", opacity: loading ? 0.5 : 1 }}><Ic d={ic.download} size={24} /><span style={{ fontSize: 13, fontWeight: 500 }}>{loading ? "Gerando..." : "Baixar Word"}</span><span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>Template CBIC</span></button><button onClick={() => { var t = exportarTexto(); if (t) { navigator.clipboard.writeText(t); setCopied(true); setTimeout(function() { setCopied(false); }, 2000); } }} style={{ padding: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 8, borderRadius: "var(--border-radius-lg)" }}><Ic d={copied ? ic.check : ic.clipboard} size={24} /><span style={{ fontSize: 13, fontWeight: 500 }}>{copied ? "Copiado!" : "Copiar texto"}</span><span style={{ fontSize: 10, color: "var(--color-text-tertiary)" }}>Para e-mail</span></button></div><div style={{ background: "var(--color-background-secondary)", borderRadius: "var(--border-radius-md)", padding: "12px 16px" }}><div style={{ fontSize: 12, color: "var(--color-text-tertiary)", marginBottom: 6 }}>Prévia</div><pre style={{ fontSize: 11, fontFamily: "var(--font-mono)", whiteSpace: "pre-wrap", lineHeight: 1.6, color: "var(--color-text-secondary)", maxHeight: 280, overflow: "auto", margin: 0 }}>{exportarTexto()}</pre></div></>)}</div>)}
 
       <div style={{ marginTop: "1.5rem", paddingTop: "0.75rem", borderTop: "0.5px solid var(--color-border-tertiary)", fontSize: 11, color: "var(--color-text-tertiary)", textAlign: "center" }}>Gestor de Projetos COIC — coic@cbic.org.br</div>
     </div>

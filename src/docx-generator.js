@@ -56,45 +56,56 @@ function contentToXml(text) {
 
 function postProcess(xml, secoes) {
   if (!secoes || secoes.length === 0) return xml;
-  var MARKER = 'paraId="FIX00004"';
-  var positions = [];
-  var searchPos = 0;
-  while (true) {
-    var idx = xml.indexOf(MARKER, searchPos);
-    if (idx < 0) break;
-    positions.push(idx);
-    searchPos = idx + MARKER.length;
-  }
-  console.log("[postProcess] Found " + positions.length + " FIX00004 for " + secoes.length + " secoes");
-  if (positions.length === 0) return xml;
-  var firstSectionStart = -1;
-  for (var i = positions.length - 1; i >= 0; i--) {
-    if (i >= secoes.length) continue;
-    var conteudo = secoes[i].conteudo_secao || "";
-    if (!conteudo) continue;
-    var markerPos = positions[i];
-    var pStart = xml.lastIndexOf("<w:p ", markerPos);
-    if (pStart < 0) continue;
-    var pEnd = xml.indexOf("</w:p>", markerPos);
+
+  // Find all <w:p>...</w:p> blocks
+  var paragraphs = [];
+  var re = /<w:p[\s>]/g;
+  var match;
+  while ((match = re.exec(xml)) !== null) {
+    var pStart = match.index;
+    var pEnd = xml.indexOf("</w:p>", pStart);
     if (pEnd < 0) continue;
     pEnd += 6;
-    var bulletXml = contentToXml(conteudo);
-    if (!bulletXml) continue;
-    console.log("[postProcess] Replacing secao " + i);
-    xml = xml.substring(0, pStart) + bulletXml + xml.substring(pEnd);
-    if (i === 0) firstSectionStart = pStart;
+    paragraphs.push({ start: pStart, end: pEnd, text: xml.substring(pStart, pEnd) });
   }
-  // Add spacing before the first section heading
-  if (firstSectionStart >= 0) {
-    var headingEnd = xml.lastIndexOf("</w:p>", firstSectionStart);
-    if (headingEnd >= 0) {
-      var headingStart = xml.lastIndexOf("<w:p ", headingEnd);
-      if (headingStart >= 0) {
-        var spacer = '<w:p><w:pPr><w:spacing w:before="480"/></w:pPr></w:p>';
-        xml = xml.substring(0, headingStart) + spacer + xml.substring(headingStart);
-      }
+
+  // Identify headlines: paragraphs with BOTH w:pBdr AND w:b in rPr
+  var headlines = [];
+  for (var i = 0; i < paragraphs.length; i++) {
+    var p = paragraphs[i].text;
+    if (p.indexOf("w:pBdr") >= 0 && p.indexOf("<w:b/>") >= 0) {
+      headlines.push(i);
     }
   }
+
+  console.log("[postProcess] Found " + headlines.length + " headlines for " + secoes.length + " secoes");
+
+  // Replace the paragraph AFTER each headline with bullet XML (iterate backwards)
+  var firstSectionStart = -1;
+  for (var h = headlines.length - 1; h >= 0; h--) {
+    if (h >= secoes.length) continue;
+    var contentIdx = headlines[h] + 1;
+    if (contentIdx >= paragraphs.length) continue;
+    var conteudo = secoes[h].conteudo_secao || "";
+    if (!conteudo) continue;
+    var target = paragraphs[contentIdx];
+    var bulletXml = contentToXml(conteudo);
+    if (!bulletXml) continue;
+    console.log("[postProcess] Replacing secao " + h + " (headline at paragraph " + headlines[h] + ")");
+    xml = xml.substring(0, target.start) + bulletXml + xml.substring(target.end);
+    if (h === 0) firstSectionStart = target.start;
+  }
+
+  // Add spacing before the first section heading
+  if (firstSectionStart >= 0 && headlines.length > 0) {
+    var headingText = paragraphs[headlines[0]].text;
+    var headingPos = xml.indexOf(headingText);
+    if (headingPos >= 0) {
+      var spacer = '<w:p><w:pPr><w:spacing w:before="480"/></w:pPr></w:p>';
+      xml = xml.substring(0, headingPos) + spacer + xml.substring(headingPos);
+    }
+  }
+
   return xml;
 }
 

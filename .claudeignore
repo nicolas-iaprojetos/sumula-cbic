@@ -1,0 +1,10 @@
+﻿node_modules/
+data/
+uploads/
+templates/
+*.docx
+*.pdf
+*.png
+*.zip
+*.sqlite
+*.db

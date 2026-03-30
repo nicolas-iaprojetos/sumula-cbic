@@ -54,10 +54,23 @@ function contentToXml(text) {
   return out;
 }
 
-function postProcess(xml, secoes) {
-  if (!secoes || secoes.length === 0) return xml;
+// ============================================================
+// Helper: extract plain text from a w:p XML fragment
+// ============================================================
+function extractParaText(pXml) {
+  var text = "";
+  var tRe = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+  var m;
+  while ((m = tRe.exec(pXml)) !== null) {
+    text += m[1];
+  }
+  return text.trim();
+}
 
-  // Find all <w:p>...</w:p> blocks
+// ============================================================
+// Helper: parse all <w:p> blocks from document XML
+// ============================================================
+function parseParagraphs(xml) {
   var paragraphs = [];
   var re = /<w:p[\s>]/g;
   var match;
@@ -66,88 +79,179 @@ function postProcess(xml, secoes) {
     var pEnd = xml.indexOf("</w:p>", pStart);
     if (pEnd < 0) continue;
     pEnd += 6;
-    paragraphs.push({ start: pStart, end: pEnd, text: xml.substring(pStart, pEnd) });
+    var pXml = xml.substring(pStart, pEnd);
+    paragraphs.push({
+      start: pStart,
+      end: pEnd,
+      xml: pXml,
+      text: extractParaText(pXml),
+      hasBorder: pXml.indexOf("w:pBdr") >= 0,
+      hasBold: pXml.indexOf("<w:b/>") >= 0 || pXml.indexOf("<w:b ") >= 0
+    });
   }
+  return paragraphs;
+}
 
-  // Identify headlines: paragraphs with BOTH w:pBdr AND w:b in rPr
-  var allHeadlines = [];
+// ============================================================
+// postProcess: replace docxtemplater content with real bullets
+//
+// Strategy: find section headlines by TEXT MATCHING (not XML
+// structure), because docxtemplater loops may lose w:pBdr/w:b
+// on the last iteration.
+// ============================================================
+function postProcess(xml, secoes) {
+  if (!secoes || secoes.length === 0) return xml;
+
+  var paragraphs = parseParagraphs(xml);
+
+  // Step 1: Find INFORMES headline (to skip)
+  var informesParaIdx = -1;
   for (var i = 0; i < paragraphs.length; i++) {
-    var p = paragraphs[i].text;
-    if (p.indexOf("w:pBdr") >= 0 && p.indexOf("<w:b/>") >= 0) {
-      allHeadlines.push(i);
+    if (/^informes$/i.test(paragraphs[i].text)) {
+      informesParaIdx = i;
+      break;
     }
   }
 
-  // Skip the first headline (INFORMES) — its content is filled by docxtemplater, not postProcess
-  var headlines = allHeadlines.slice(1);
+  // Step 2: Find each section's headline by matching titulo_secao text
+  // Use a fuzzy match because docxtemplater may split text across runs
+  var sectionMap = []; // { secIdx, paraIdx }
 
-  console.log("[postProcess] Found " + allHeadlines.length + " headlines total, processing " + headlines.length + " (skipped INFORMES) for " + secoes.length + " secoes");
+  for (var s = 0; s < secoes.length; s++) {
+    var title = (secoes[s].titulo_secao || "").trim().toUpperCase();
+    if (!title) continue;
 
-  var spacer = '<w:p><w:pPr><w:spacing w:after="120"/></w:pPr></w:p>';
+    var bestMatch = -1;
+    for (var p = 0; p < paragraphs.length; p++) {
+      if (p === informesParaIdx) continue;
+      // Skip paragraphs already claimed by another section
+      var alreadyClaimed = false;
+      for (var c = 0; c < sectionMap.length; c++) {
+        if (sectionMap[c].paraIdx === p) { alreadyClaimed = true; break; }
+      }
+      if (alreadyClaimed) continue;
 
-  // Replace ALL paragraphs between consecutive headlines with bullet XML (iterate backwards)
-  for (var h = headlines.length - 1; h >= 0; h--) {
-    if (h >= secoes.length) continue;
+      var pText = paragraphs[p].text.toUpperCase();
+      if (!pText) continue;
 
-    var contentStart = headlines[h] + 1;
-    if (contentStart >= paragraphs.length) continue;
-
-    // Find where this section's content ends: right before the next headline (or next allHeadlines entry)
-    var nextBoundary;
-    var allIdx = allHeadlines.indexOf(headlines[h]);
-    if (allIdx >= 0 && allIdx + 1 < allHeadlines.length) {
-      nextBoundary = allHeadlines[allIdx + 1]; // paragraph index of next headline
-    } else {
-      // Last headline — find the end boundary (e.g., sectPr or ANEXO or QUORUM)
-      nextBoundary = contentStart + 1; // fallback: just replace the next paragraph
-      for (var k = contentStart; k < paragraphs.length; k++) {
-        var pText = paragraphs[k].text;
-        if (pText.indexOf("w:sectPr") >= 0 || pText.indexOf(">ANEXO<") >= 0 ||
-            pText.indexOf(">QUÓRUM<") >= 0 || pText.indexOf(">QUORUM<") >= 0 ||
-            (pText.indexOf("w:pBdr") >= 0 && pText.indexOf("<w:b/>") >= 0)) {
-          nextBoundary = k;
+      // Exact match
+      if (pText === title) {
+        bestMatch = p;
+        break;
+      }
+      // Prefix match (title may be truncated in XML runs)
+      if (title.length > 15 && pText.length > 15) {
+        if (pText.indexOf(title.substring(0, 15)) === 0 || title.indexOf(pText.substring(0, 15)) === 0) {
+          bestMatch = p;
           break;
         }
-        nextBoundary = k + 1;
       }
     }
 
-    if (contentStart >= nextBoundary) continue;
+    if (bestMatch >= 0) {
+      sectionMap.push({ secIdx: s, paraIdx: bestMatch });
+    } else {
+      console.log("[postProcess] WARNING: headline not found for secao " + s + ": '" + title.substring(0, 50) + "'");
+    }
+  }
 
-    var conteudo = secoes[h].conteudo_secao || "";
+  // Sort by paragraph position (ascending)
+  sectionMap.sort(function(a, b) { return a.paraIdx - b.paraIdx; });
+
+  console.log("[postProcess] Matched " + sectionMap.length + " of " + secoes.length + " secoes");
+  for (var d = 0; d < sectionMap.length; d++) {
+    console.log("[postProcess]   secao " + sectionMap[d].secIdx + " -> paragraph " + sectionMap[d].paraIdx + " '" + secoes[sectionMap[d].secIdx].titulo_secao.substring(0, 40) + "'");
+  }
+
+  // Step 3: For each section, determine content range (paragraphs to replace)
+  var spacer = '<w:p><w:pPr><w:spacing w:after="120"/></w:pPr></w:p>';
+
+  // Process from BOTTOM to TOP so earlier indices stay valid
+  for (var h = sectionMap.length - 1; h >= 0; h--) {
+    var entry = sectionMap[h];
+    var secIdx = entry.secIdx;
+    var headlineIdx = entry.paraIdx;
+
+    var conteudo = secoes[secIdx].conteudo_secao || "";
     if (!conteudo) continue;
 
     var bulletXml = contentToXml(conteudo);
     if (!bulletXml) continue;
 
-    console.log("[postProcess] Replacing secao " + h + " (headline at paragraph " + headlines[h] + ", content paragraphs " + contentStart + "-" + (nextBoundary - 1) + ")");
+    // Content starts right after the headline
+    var contentStart = headlineIdx + 1;
+    if (contentStart >= paragraphs.length) continue;
 
-    var headlinePara = paragraphs[headlines[h]];
-    var replaceEnd = paragraphs[nextBoundary - 1].end;
-    var insertBefore = (h > 0) ? spacer : '';
-
-    xml = xml.substring(0, headlinePara.start) + insertBefore + headlinePara.text + spacer + bulletXml + xml.substring(replaceEnd);
-
-    // Re-parse paragraphs since offsets changed
-    paragraphs = [];
-    re.lastIndex = 0;
-    while ((match = re.exec(xml)) !== null) {
-      var pS = match.index;
-      var pE = xml.indexOf("</w:p>", pS);
-      if (pE < 0) continue;
-      pE += 6;
-      paragraphs.push({ start: pS, end: pE, text: xml.substring(pS, pE) });
-    }
-
-    // Re-find all headlines with updated paragraph indices
-    allHeadlines = [];
-    for (var j = 0; j < paragraphs.length; j++) {
-      var pt = paragraphs[j].text;
-      if (pt.indexOf("w:pBdr") >= 0 && pt.indexOf("<w:b/>") >= 0) {
-        allHeadlines.push(j);
+    // Content ends right before the next section headline, QUÓRUM, ANEXO, or sectPr
+    var contentEnd;
+    if (h + 1 < sectionMap.length) {
+      // Next section headline is the boundary
+      contentEnd = sectionMap[h + 1].paraIdx;
+    } else {
+      // Last section: scan forward for QUÓRUM, ANEXO, or section break
+      contentEnd = contentStart;
+      for (var k = contentStart; k < paragraphs.length; k++) {
+        var kText = paragraphs[k].text;
+        var kXml = paragraphs[k].xml;
+        if (/^QU[OÓ]RUM/i.test(kText) ||
+            /^ANEXO/i.test(kText) ||
+            kXml.indexOf("w:sectPr") >= 0) {
+          contentEnd = k;
+          break;
+        }
+        contentEnd = k + 1;
       }
     }
-    headlines = allHeadlines.slice(1);
+
+    // Safety: don't replace if no content area
+    if (contentStart >= contentEnd) {
+      console.log("[postProcess] Skipping secao " + secIdx + ": no content area (start=" + contentStart + " end=" + contentEnd + ")");
+      continue;
+    }
+
+    console.log("[postProcess] Replacing secao " + secIdx + " '" + secoes[secIdx].titulo_secao.substring(0, 40) + "' (headline=" + headlineIdx + ", content=" + contentStart + "-" + (contentEnd - 1) + ")");
+
+    // Build replacement XML
+    var headlineParaXml = paragraphs[headlineIdx].xml;
+    var replaceFrom = paragraphs[headlineIdx].start;
+    var replaceTo = paragraphs[contentEnd - 1].end;
+
+    var spacerBefore = (h > 0) ? spacer : "";
+    var newXml = spacerBefore + headlineParaXml + spacer + bulletXml;
+
+    xml = xml.substring(0, replaceFrom) + newXml + xml.substring(replaceTo);
+
+    // Re-parse paragraphs (offsets changed)
+    paragraphs = parseParagraphs(xml);
+
+    // Re-find section headlines for remaining iterations
+    informesParaIdx = -1;
+    for (var ii = 0; ii < paragraphs.length; ii++) {
+      if (/^informes$/i.test(paragraphs[ii].text)) { informesParaIdx = ii; break; }
+    }
+
+    sectionMap = [];
+    for (var ss = 0; ss < secoes.length; ss++) {
+      var tt = (secoes[ss].titulo_secao || "").trim().toUpperCase();
+      if (!tt) continue;
+      var ff = -1;
+      for (var pp = 0; pp < paragraphs.length; pp++) {
+        if (pp === informesParaIdx) continue;
+        var alreadyUsed = false;
+        for (var cc = 0; cc < sectionMap.length; cc++) {
+          if (sectionMap[cc].paraIdx === pp) { alreadyUsed = true; break; }
+        }
+        if (alreadyUsed) continue;
+        var ppText = paragraphs[pp].text.toUpperCase();
+        if (!ppText) continue;
+        if (ppText === tt) { ff = pp; break; }
+        if (tt.length > 15 && ppText.length > 15) {
+          if (ppText.indexOf(tt.substring(0, 15)) === 0 || tt.indexOf(ppText.substring(0, 15)) === 0) { ff = pp; break; }
+        }
+      }
+      if (ff >= 0) sectionMap.push({ secIdx: ss, paraIdx: ff });
+    }
+    sectionMap.sort(function(a, b) { return a.paraIdx - b.paraIdx; });
   }
 
   return xml;
@@ -176,33 +280,19 @@ function removeEmptyAnexo(xml) {
   return xml;
 }
 
-/**
- * Insert images into the ANEXO section.
- * Each image is added as a relationship in the .docx zip and referenced via w:drawing.
- * 
- * @param {PizZip} zip - The docx zip object
- * @param {string} xml - The document.xml content
- * @param {Array} images - Array of {data: Buffer, width: number, height: number, ext: 'png'|'jpeg'}
- * @returns {string} Modified XML with images inserted
- */
 function insertAnexoImages(zip, xml, images) {
   if (!images || images.length === 0) return xml;
 
-  // Find the {#anexos}...{/anexos} block or the ANEXO section
-  // After docxtemplater renders with empty anexos, the block may be gone
-  // So we look for the ANEXO heading and insert after "Slides Apresentados"
   var slidesPos = xml.indexOf("Slides Apresentados");
   if (slidesPos < 0) {
     console.log("[insertAnexoImages] 'Slides Apresentados' not found");
     return xml;
   }
 
-  // Find the </w:p> after "Slides Apresentados"
   var insertAfter = xml.indexOf("</w:p>", slidesPos);
   if (insertAfter < 0) return xml;
   insertAfter += 6;
 
-  // Read existing relationships to determine next rId
   var relsPath = "word/_rels/document.xml.rels";
   var relsXml = zip.file(relsPath) ? zip.file(relsPath).asText() : "";
   var maxRid = 0;
@@ -213,7 +303,6 @@ function insertAnexoImages(zip, xml, images) {
     if (n > maxRid) maxRid = n;
   }
 
-  // Ensure content types include png/jpeg
   var ctPath = "[Content_Types].xml";
   var ctXml = zip.file(ctPath) ? zip.file(ctPath).asText() : "";
   if (ctXml.indexOf('Extension="png"') < 0) {
@@ -242,8 +331,8 @@ function insertAnexoImages(zip, xml, images) {
 
   var imagesXml = "";
   var newRels = "";
-  var maxWidthEmu = 5760000;  // 16cm full width
-  var maxHeightEmu = 4800000; // ~13cm max height to fit ~2 per page
+  var maxWidthEmu = 5760000;
+  var maxHeightEmu = 4800000;
 
   for (var i = 0; i < images.length; i++) {
     var img = images[i];
@@ -253,17 +342,13 @@ function insertAnexoImages(zip, xml, images) {
     var mediaName = "image_anexo_" + (i + 1) + "." + ext;
     var mediaPath = "word/media/" + mediaName;
 
-    // Add image file to zip
     zip.file(mediaPath, img.data);
 
-    // Add relationship
     newRels += '<Relationship Id="' + rIdStr + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/' + mediaName + '"/>';
 
-    // Calculate EMU dimensions (1 inch = 914400 EMU, 1 pixel at 96 DPI = 9525 EMU)
     var wEmu = (img.width || 800) * 9525;
     var hEmu = (img.height || 600) * 9525;
 
-    // Scale to fit page width, then cap height so ~2 fit per page
     if (wEmu > maxWidthEmu) {
       var scale = maxWidthEmu / wEmu;
       wEmu = Math.round(wEmu * scale);
@@ -275,18 +360,15 @@ function insertAnexoImages(zip, xml, images) {
       hEmu = Math.round(hEmu * scale2);
     }
 
-    // Each image in a centered paragraph with small spacing — Word breaks pages automatically
     imagesXml += '<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="120"/></w:pPr>' +
       mkImageDrawing(rIdStr, wEmu, hEmu, 100 + i, mediaName) + '</w:p>';
   }
 
-  // Insert relationships
   if (newRels) {
     relsXml = relsXml.replace("</Relationships>", newRels + "</Relationships>");
     zip.file(relsPath, relsXml);
   }
 
-  // Insert images after "Slides Apresentados"
   xml = xml.substring(0, insertAfter) + imagesXml + xml.substring(insertAfter);
 
   console.log("[insertAnexoImages] Inserted " + images.length + " images");
@@ -320,13 +402,11 @@ async function generateSumula(data) {
     });
   }
 
-  // Extract INFORMES from secoes if informes field is empty
   var informesText = data.informes || "";
   if (!informesText) {
     var informesIdx = secoes.findIndex(function(s) { return /^informes$/i.test(s.titulo_secao); });
     if (informesIdx >= 0) {
       informesText = secoes[informesIdx].conteudo_secao || "";
-      // Clean bullet prefixes for paragraph format
       informesText = informesText.replace(/^- /gm, "").replace(/\n/g, " ").trim();
       secoes.splice(informesIdx, 1);
     }
@@ -356,10 +436,8 @@ async function generateSumula(data) {
   var outputZip = doc.getZip();
   var docXml = outputZip.file("word/document.xml").asText();
 
-  // FIX 1: Bullets
   docXml = postProcess(docXml, secoes);
 
-  // FIX 3: Handle ANEXO — insert images or remove empty section
   if (hasImages) {
     docXml = insertAnexoImages(outputZip, docXml, data.anexo_images);
   } else {

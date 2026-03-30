@@ -267,7 +267,19 @@ async function generateSumula(data) {
     });
   }
 
-  console.log("[generateSumula] " + secoes.length + " secoes");
+  // Extract INFORMES from secoes if informes field is empty
+  var informesText = data.informes || "";
+  if (!informesText) {
+    var informesIdx = secoes.findIndex(function(s) { return /^informes$/i.test(s.titulo_secao); });
+    if (informesIdx >= 0) {
+      informesText = secoes[informesIdx].conteudo_secao || "";
+      // Clean bullet prefixes for paragraph format
+      informesText = informesText.replace(/^- /gm, "").replace(/\n/g, " ").trim();
+      secoes.splice(informesIdx, 1);
+    }
+  }
+
+  console.log("[generateSumula] " + secoes.length + " secoes (informes extracted: " + (informesText ? "yes" : "no") + ")");
 
   var hasImages = data.anexo_images && data.anexo_images.length > 0;
 
@@ -280,7 +292,7 @@ async function generateSumula(data) {
     numero_reuniao: data.numero_reuniao || "",
     titulo_reuniao: data.titulo_reuniao || "",
     ano: data.ano || String(new Date().getFullYear()),
-    informes: data.informes || "",
+    informes: informesText,
     pauta: data.pauta || [],
     secoes: secoes,
     quorum: data.quorum || [],

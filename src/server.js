@@ -3,6 +3,7 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const { execSync } = require("child_process");
 
 const db = require("./database");
 const { generateSumula } = require("./docx-generator");
@@ -127,6 +128,10 @@ app.use("/data/slides", express.static(slidesDir));
 app.post("/api/upload-slides", upload.single("slides"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "Nenhum arquivo enviado" });
+    // Check dependencies
+    try { execSync("which pdftoppm", { stdio: "pipe" }); } catch (e) {
+      return res.status(500).json({ error: "pdftoppm não instalado no servidor. Execute: apt install poppler-utils" });
+    }
     var images = convertToImages(req.file.path, req.file.originalname);
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 

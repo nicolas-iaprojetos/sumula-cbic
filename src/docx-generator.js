@@ -85,20 +85,69 @@ function postProcess(xml, secoes) {
 
   var spacer = '<w:p><w:pPr><w:spacing w:after="120"/></w:pPr></w:p>';
 
-  // Replace the paragraph AFTER each headline with bullet XML (iterate backwards)
+  // Replace ALL paragraphs between consecutive headlines with bullet XML (iterate backwards)
   for (var h = headlines.length - 1; h >= 0; h--) {
     if (h >= secoes.length) continue;
-    var contentIdx = headlines[h] + 1;
-    if (contentIdx >= paragraphs.length) continue;
+
+    var contentStart = headlines[h] + 1;
+    if (contentStart >= paragraphs.length) continue;
+
+    // Find where this section's content ends: right before the next headline (or next allHeadlines entry)
+    var nextBoundary;
+    var allIdx = allHeadlines.indexOf(headlines[h]);
+    if (allIdx >= 0 && allIdx + 1 < allHeadlines.length) {
+      nextBoundary = allHeadlines[allIdx + 1]; // paragraph index of next headline
+    } else {
+      // Last headline — find the end boundary (e.g., sectPr or ANEXO or QUORUM)
+      nextBoundary = contentStart + 1; // fallback: just replace the next paragraph
+      for (var k = contentStart; k < paragraphs.length; k++) {
+        var pText = paragraphs[k].text;
+        if (pText.indexOf("w:sectPr") >= 0 || pText.indexOf(">ANEXO<") >= 0 ||
+            pText.indexOf(">QUÓRUM<") >= 0 || pText.indexOf(">QUORUM<") >= 0 ||
+            (pText.indexOf("w:pBdr") >= 0 && pText.indexOf("<w:b/>") >= 0)) {
+          nextBoundary = k;
+          break;
+        }
+        nextBoundary = k + 1;
+      }
+    }
+
+    if (contentStart >= nextBoundary) continue;
+
     var conteudo = secoes[h].conteudo_secao || "";
     if (!conteudo) continue;
-    var target = paragraphs[contentIdx];
+
     var bulletXml = contentToXml(conteudo);
     if (!bulletXml) continue;
-    console.log("[postProcess] Replacing secao " + h + " (headline at paragraph " + headlines[h] + ")");
+
+    console.log("[postProcess] Replacing secao " + h + " (headline at paragraph " + headlines[h] + ", content paragraphs " + contentStart + "-" + (nextBoundary - 1) + ")");
+
     var headlinePara = paragraphs[headlines[h]];
+    var replaceEnd = paragraphs[nextBoundary - 1].end;
     var insertBefore = (h > 0) ? spacer : '';
-    xml = xml.substring(0, headlinePara.start) + insertBefore + headlinePara.text + spacer + bulletXml + xml.substring(target.end);
+
+    xml = xml.substring(0, headlinePara.start) + insertBefore + headlinePara.text + spacer + bulletXml + xml.substring(replaceEnd);
+
+    // Re-parse paragraphs since offsets changed
+    paragraphs = [];
+    re.lastIndex = 0;
+    while ((match = re.exec(xml)) !== null) {
+      var pS = match.index;
+      var pE = xml.indexOf("</w:p>", pS);
+      if (pE < 0) continue;
+      pE += 6;
+      paragraphs.push({ start: pS, end: pE, text: xml.substring(pS, pE) });
+    }
+
+    // Re-find all headlines with updated paragraph indices
+    allHeadlines = [];
+    for (var j = 0; j < paragraphs.length; j++) {
+      var pt = paragraphs[j].text;
+      if (pt.indexOf("w:pBdr") >= 0 && pt.indexOf("<w:b/>") >= 0) {
+        allHeadlines.push(j);
+      }
+    }
+    headlines = allHeadlines.slice(1);
   }
 
   return xml;
@@ -284,6 +333,7 @@ async function generateSumula(data) {
   }
 
   console.log("[generateSumula] " + secoes.length + " secoes (informes extracted: " + (informesText ? "yes" : "no") + ")");
+  console.log("[generateSumula] pauta items: " + (data.pauta ? data.pauta.length : 0), JSON.stringify(data.pauta || []).substring(0, 500));
 
   var hasImages = data.anexo_images && data.anexo_images.length > 0;
 

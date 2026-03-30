@@ -96,11 +96,21 @@ function parseParagraphs(xml) {
 // Helper: remove "Apresentação de" rows when apresentador is empty
 // ============================================================
 function cleanEmptyApresentador(xml) {
-  var paras = parseParagraphs(xml);
-  for (var i = paras.length - 1; i >= 0; i--) {
-    var t = paras[i].text;
-    if (/^Apresenta..o de\s*$/.test(t)) {
-      xml = xml.substring(0, paras[i].start) + xml.substring(paras[i].end);
+  // Remove entire <w:tr> rows that contain only "Apresentação de" with no name
+  var trRe = /<w:tr[\s>]/g;
+  var match;
+  var rows = [];
+  while ((match = trRe.exec(xml)) !== null) {
+    var trStart = match.index;
+    var trEnd = xml.indexOf("</w:tr>", trStart);
+    if (trEnd < 0) continue;
+    trEnd += 7;
+    rows.push({ start: trStart, end: trEnd, xml: xml.substring(trStart, trEnd) });
+  }
+  for (var i = rows.length - 1; i >= 0; i--) {
+    var rowText = extractParaText(rows[i].xml);
+    if (/^Apresenta..o de\s*$/.test(rowText)) {
+      xml = xml.substring(0, rows[i].start) + xml.substring(rows[i].end);
     }
   }
   return xml;
@@ -178,7 +188,7 @@ function postProcess(xml, secoes) {
   }
 
   // Step 3: For each section, determine content range (paragraphs to replace)
-  var spacer = '<w:p><w:pPr><w:spacing w:after="120"/></w:pPr></w:p>';
+  var spacer = '<w:p><w:pPr><w:spacing w:before="240" w:after="240"/></w:pPr></w:p>';
 
   // Process from BOTTOM to TOP so earlier indices stay valid
   for (var h = sectionMap.length - 1; h >= 0; h--) {

@@ -122,6 +122,7 @@ Responda EXCLUSIVAMENTE com um JSON válido, sem texto antes ou depois, no forma
 REGRAS CRÍTICAS PARA OS TÍTULOS DAS SEÇÕES
 
 1. A PRIMEIRA seção é sempre 'INFORMES' com um ÚNICO elemento no array bullets contendo um parágrafo corrido (sem marcadores) que DEVE incluir TODOS estes elementos: formato da reunião (virtual/presencial/híbrido), plataforma utilizada, data por extenso com dia da semana, horário de início e término, número de presentes por extenso e em numeral, número de ausentes por extenso e em numeral, total de membros ativos por extenso e em numeral, percentual de quórum por extenso e em numeral, e se o quórum mínimo foi atingido. Termine com 'Foram pautas da reunião os seguintes temas:'
+Formato dos números: SEMPRE numeral primeiro seguido do extenso entre parênteses. Exemplo: 13 (treze), NÃO treze (13).
 Exemplo: 'A quinquagésima sétima reunião ordinária do CIE da COIC/CBIC foi realizada em formato virtual, através da plataforma Microsoft Teams, no dia 25 de março de 2026, uma terça-feira, com início às 16h30 e término às 18h00. Estavam presentes 13 (treze) participantes. Foram registradas 8 (oito) ausências de um total de 21 (vinte e um) membros ativos do CIE, atingindo-se o quórum de 62% (sessenta e dois por cento). Foram pautas da reunião os seguintes temas:'
 2. A SEGUNDA seção é sempre 'ABERTURA E BOAS-VINDAS' com bullets descrevendo a abertura
 3. As seções intermediárias devem ter títulos IDÊNTICOS aos itens da PAUTA fornecida. Copie LITERALMENTE, caractere por caractere
@@ -140,7 +141,7 @@ ERRADO (fragmentado e telegráfico):
 
 CORRETO (um assunto por bullet, mas completo e narrativo):
 'bullets': [
-  'O Sr. Nícolas Santos (COIC/CBIC) apresentou a revisão completa do calendário de atividades da COIC para 2026, conforme apresentação em anexo, destacando as alterações realizadas desde a apresentação na Reunião Nacional da Construção Industrial de 25 de fevereiro. Entre as mudanças, informou o reagendamento do Roadshow COIC no Rio Grande do Sul, inicialmente previsto para abril, remarcado para 23 de junho de 2026 em comum acordo com as entidades parceiras regionais, considerando ajustes nas agendas dos apoiadores e participantes.',
+  'O Sr. Nícolas Santos apresentou a revisão completa do calendário de atividades da COIC para 2026, conforme apresentação em anexo, destacando as alterações realizadas desde a apresentação na Reunião Nacional da Construção Industrial de 25 de fevereiro. Entre as mudanças, informou o reagendamento do Roadshow COIC no Rio Grande do Sul, inicialmente previsto para abril, remarcado para 23 de junho de 2026 em comum acordo com as entidades parceiras regionais, considerando ajustes nas agendas dos apoiadores e participantes.',
   'Em relação ao ENIC 2026, foi confirmada a realização entre os dias 19 e 21 de maio no Distrito Anhembi em São Paulo, mantendo o formato presencial sem transmissão online ao vivo, diferentemente da edição anterior. O evento funcionará independentemente da FEICON, que ocorrerá em abril, sendo pago com descontos especiais para empresas associadas à CBIC, com programação das 10h00 às 18h00 em cada um dos três dias (conforme apresentado).'
 ]
 
@@ -151,8 +152,8 @@ ERRADO (tudo misturado num bloco gigante):
 
 CORRETO (um assunto por bullet, cada um completo):
 'bullets': [
-  'O Sr. Ilso José de Oliveira (COIC/CBIC) deu as boas-vindas aos participantes e apresentou a pauta do dia, informando que a reunião teria duração de 1h30 com término previsto para as 18h00, conforme novo formato adotado a partir desta edição.',
-  'Foi apresentado oficialmente o Sr. Eduardo Henrique Silvino (RETC Infraestrutura) como novo membro efetivo do comitê, em substituição ao Sr. Marcus Cassini, que solicitou afastamento devido a compromissos profissionais conflitantes com o horário das reuniões ordinárias.',
+  'O Sr. Ilso José de Oliveira deu as boas-vindas aos participantes e apresentou a pauta do dia, informando que a reunião teria duração de 1h30 com término previsto para as 18h00, conforme novo formato adotado a partir desta edição.',
+  'Foi apresentado oficialmente o Sr. Eduardo Henrique Silvino como novo membro efetivo do comitê, em substituição ao Sr. Marcus Cassini, que solicitou afastamento devido a compromissos profissionais conflitantes com o horário das reuniões ordinárias.',
   'O Sr. Eduardo Silvino apresentou-se ao grupo, informando sua posição como Diretor de Operações da RETC, responsável pela integração entre as operações do escritório e os canteiros de obras, e manifestou disposição em contribuir com o intercâmbio de experiências nos diversos temas debatidos pelo comitê.'
 ]
 
@@ -180,8 +181,11 @@ NÃO qualifique datas, nomes de entidades ou informações institucionais já co
 
 NOMES — FORMA CURTA OBRIGATÓRIA
 
-PRIMEIRA menção: Nome Completo (Empresa). Ex: 'Ilso José de Oliveira (COIC/CBIC)'
+PRIMEIRA menção de cada participante: Nome Completo, sem empresa entre parênteses. Ex: 'O Sr. Ilso José de Oliveira deu as boas-vindas...'
 Menções SEGUINTES: forma curta. Ex: 'Sr. Ilso Oliveira' ou 'o Presidente'
+
+ERRADO: 'O Sr. Ilso José de Oliveira (COIC/CBIC) deu as boas-vindas'
+CORRETO: 'O Sr. Ilso José de Oliveira deu as boas-vindas'
 
 ERRADO na segunda menção: 'O Sr. Alexandre Nícolas Dantas dos Santos'
 CORRETO na segunda menção: 'O Sr. Nícolas Santos' ou 'Nícolas Santos'
@@ -195,6 +199,7 @@ Palavras e expressões PROIBIDAS:
 - Adjetivos avaliativos: 'calorosamente', 'brilhante', 'excelente', 'generoso', 'importante'
 - Advérbios editoriais: 'infelizmente', 'prontamente', 'felizmente', 'lamentavelmente'
 - Anedotas irrelevantes: pausas para café, idas ao banheiro, pedidos de pausa pessoal, comentários informais, piadas. NÃO registre nada que não tenha relevância institucional
+- Comentários sobre dinâmica da reunião: 'interrompeu a apresentação', 'a discussão foi interrompida', 'retornando em seguida para acompanhamento integral'. Registre apenas o CONTEÚDO discutido, não o FLUXO da reunião
 - Editorializações: 'demonstrando ambiente cordial', 'em tom colaborativo', 'comprometendo-se'
 
 ERRADO: 'O Sr. Ilso Oliveira lamentou infelizmente o falecimento do Sr. Kleber Ricardo'
@@ -218,8 +223,8 @@ ERRADO (tudo junto):
 
 CORRETO (separado por pessoa):
 'bullets': [
-  'O Sr. Oscar Simonsen (ABEMI) informou necessidade de saída antecipada às 17h15 devido a compromisso externo, permanecendo conectado via dispositivo móvel.',
-  'O Sr. Gustavo Bado (Estrutural) comunicou necessidade de saída às 17h45 para atender compromisso profissional.',
+  'O Sr. Oscar Simonsen informou necessidade de saída antecipada às 17h15 devido a compromisso externo, permanecendo conectado via dispositivo móvel.',
+  'O Sr. Gustavo Bado comunicou necessidade de saída às 17h45 para atender compromisso profissional.',
   'Não havendo outras manifestações, a reunião foi encerrada pelo Sr. Ilso Oliveira, com orientação para acompanhamento das próximas atividades pelos canais oficiais da COIC.'
 ]
 
@@ -227,10 +232,14 @@ COMPLETUDE — NÃO CORTE INFORMAÇÃO
 
 Todas as informações relevantes mencionadas na transcrição devem ser registradas. NÃO omita detalhes por brevidade. Se o apresentador mencionou um desdobramento, uma justificativa ou uma consequência, registre. Se mencionou entidades parceiras, nomes de apoiadores ou detalhes operacionais, registre. A súmula é um documento oficial e deve ser COMPLETA.
 
+CONSISTÊNCIA NUMÉRICA: Se o texto mencionar uma quantidade (ex: 5 painéis, 3 projetos, 6 hubs), TODOS os itens devem ser listados nos sub-bullets. Se mencionou 5 painéis, liste os 5. Se a transcrição não detalha todos, registre os que foram mencionados e indique os demais como 'além de [N] outros painéis a serem detalhados posteriormente'.
+
+SEÇÕES BREVES: Mesmo que um tema tenha sido tratado brevemente na reunião, a seção correspondente deve conter NO MÍNIMO 2 bullets. Se a transcrição traz pouca informação, o primeiro bullet registra o que foi dito e o segundo registra o status ou encaminhamento. Exemplo: primeiro bullet com o relato factual, segundo bullet com 'O documento encontra-se em fase de finalização, aguardando as últimas contribuições para posterior divulgação.'
+
 ESTILO GERAL
 
 - Verbos no pretérito perfeito: 'apresentou', 'informou', 'deliberou', 'sugeriu', 'questionou', 'esclareceu', 'registrou'
-- Cada bullet: 3 a 5 linhas, frase completa com contexto e detalhamento
+- Cada bullet: 3 a 6 linhas, frase completa com contexto e detalhamento
 - Encaminhamentos: 'Ação — Responsável: Nome (Empresa) — Prazo: DD/MM/AAAA'
 - Se informação ambígua, omitir em vez de inventar
 - NÃO repetir a mesma informação em seções diferentes

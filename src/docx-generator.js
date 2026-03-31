@@ -188,7 +188,19 @@ function postProcess(xml, secoes) {
   }
 
   // Step 3: For each section, determine content range (paragraphs to replace)
-  var spacer = '<w:p><w:pPr><w:spacing w:after="240"/></w:pPr></w:p>';
+  // Instead of separate spacer paragraphs (which get eaten by bottom-up replacement),
+  // inject w:spacing directly into the headline paragraph XML.
+  function addSpacingToHeadline(headXml) {
+    // Add w:spacing w:before="200" w:after="200" (10pt) into the pPr
+    if (headXml.indexOf('<w:spacing') >= 0) {
+      // Replace existing spacing
+      headXml = headXml.replace(/<w:spacing[^/]*\/>/, '<w:spacing w:before="200" w:after="200"/>');
+    } else if (headXml.indexOf('</w:pPr>') >= 0) {
+      headXml = headXml.replace('</w:pPr>', '<w:spacing w:before="200" w:after="200"/></w:pPr>');
+    }
+    return headXml;
+  }
+  var spacerTrailingPara = '<w:p><w:pPr><w:spacing w:after="200"/></w:pPr></w:p>';
 
   // Process from BOTTOM to TOP so earlier indices stay valid
   for (var h = sectionMap.length - 1; h >= 0; h--) {
@@ -241,8 +253,9 @@ function postProcess(xml, secoes) {
     var replaceTo = paragraphs[contentEnd - 1].end;
 
     var isLastSection = (h === sectionMap.length - 1);
-    var spacerTrailing = isLastSection ? spacer : '';
-    var newXml = spacer + headlineParaXml + spacer + bulletXml + spacerTrailing;
+    var spacerTrailing = isLastSection ? spacerTrailingPara : '';
+    headlineParaXml = addSpacingToHeadline(headlineParaXml);
+    var newXml = headlineParaXml + bulletXml + spacerTrailing;
 
     xml = xml.substring(0, replaceFrom) + newXml + xml.substring(replaceTo);
 

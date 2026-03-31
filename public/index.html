@@ -170,14 +170,15 @@ ATRIBUIÇÃO E VOZ PASSIVA
 - Proporção: 2-3 bullets com atribuição direta para cada 1 com voz passiva
 - NUNCA voz passiva quando muda o interlocutor
 
-DADOS NUMÉRICOS — SEMPRE QUALIFICAR
+DADOS NUMÉRICOS — QUALIFICAR JUNTO AO DADO
 
-Todo dado quantitativo que veio de uma fala deve ter qualificador: '(conforme mencionado)', '(conforme registrado)' ou '(conforme apresentado)'.
+Todo dado quantitativo que veio de uma fala deve ter qualificador COLADO ao dado, não no final da frase. Integre naturalmente.
 
-ERRADO: 'O evento contará com 6.000 m² de área expositiva e espera receber mais de 5.000 participantes.'
-CORRETO: 'O evento contará com área expositiva de 6.000 m² e expectativa de receber mais de 5.000 participantes (conforme apresentado).'
+ERRADO (qualificador solto no final): 'O evento contará com 6.000 m² de área expositiva, com expectativa de mais de 5.000 participantes (conforme apresentado).'
+CORRETO (qualificador junto ao dado): 'O evento contará com 6.000 m² de área expositiva (conforme apresentado), com expectativa de receber mais de 5.000 participantes.'
+CORRETO (integrado na frase): 'Foi registrada expectativa de mais de 5.000 participantes, conforme dados apresentados na reunião, em área expositiva de 6.000 m².'
 
-NÃO qualifique datas, nomes de entidades ou informações institucionais já conhecidas.
+Varie os qualificadores: 'conforme mencionado', 'conforme registrado', 'conforme informado', 'valor citado na reunião', 'conforme dados apresentados'. NÃO repita sempre o mesmo. NÃO coloque entre parênteses no final da frase.
 
 NOMES — FORMA CURTA OBRIGATÓRIA
 
@@ -215,6 +216,8 @@ Se a transcrição menciona uso de slides ou material projetado, o PRIMEIRO bull
 PALAVRA ABERTA E ENCERRAMENTO — REGRAS ESTRITAS
 
 Cada pessoa que se manifestou = um bullet separado. NUNCA misture falas de pessoas diferentes no mesmo bullet.
+
+Registre APENAS manifestações com conteúdo substantivo novo. NÃO registre: pedidos de desculpas por atraso, confirmações de presença em eventos futuros, agradecimentos genéricos, repetições de pontos já registrados em seções anteriores. Se um membro repete na PALAVRA ABERTA algo que já disse na seção temática, NÃO duplique. A PALAVRA ABERTA deve ter entre 3 e 6 bullets no máximo.
 
 ERRADO (tudo junto):
 'bullets': [
@@ -265,7 +268,7 @@ O QUE NÃO INCLUIR
 - NÃO gere seção 'ANEXO' ou 'ANEXOS'
 - NÃO inclua texto fora do JSON
 - NÃO use markdown dentro do JSON (sem **, ##, etc.)
-- NÃO use aspas com barra invertida dentro do texto dos bullets. Se precisar citar um nome de painel ou evento, escreva sem aspas`;
+- NÃO use aspas de nenhum tipo (simples, duplas ou com barra invertida) dentro do texto dos bullets para citar nomes de painéis, eventos ou documentos. Escreva o nome diretamente sem delimitadores. Exemplo ERRADO: 'painel sobre *Do mapeamento à prática*'. Exemplo CORRETO: 'painel Do mapeamento à prática: como as empresas da construção estão transformando ESG em ação'`;
 
 const uid = () => "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const norm = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();

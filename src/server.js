@@ -90,6 +90,15 @@ app.get("/api/gts/:gtId/quorum", (req, res) => {
   res.json(db.getQuorum(req.params.gtId, ano));
 });
 
+app.delete("/api/reunioes/:reuniaoId", (req, res) => {
+  db.deleteReuniao(req.params.reuniaoId);
+  res.json({ ok: true });
+});
+
+app.get("/api/reunioes/:reuniaoId/presencas", (req, res) => {
+  res.json(db.getPresencasReuniao(req.params.reuniaoId));
+});
+
 app.post("/api/reunioes/:reuniaoId/presencas", (req, res) => {
   db.registerPresencas(req.params.reuniaoId, req.body.presencas);
   res.json({ ok: true });

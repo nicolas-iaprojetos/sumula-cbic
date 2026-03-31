@@ -110,6 +110,16 @@ module.exports = {
     return { id: id, gt_id: gtId };
   },
 
+  deleteReuniao: function (reuniaoId) {
+    db.prepare("DELETE FROM presencas WHERE reuniao_id = ?").run(reuniaoId);
+    db.prepare("DELETE FROM reunioes WHERE id = ?").run(reuniaoId);
+  },
+
+  getPresencasReuniao: function (reuniaoId) {
+    var rows = db.prepare("SELECT p.membro_id, m.nome, m.nome_completo, p.presente FROM presencas p JOIN membros m ON p.membro_id = m.id WHERE p.reuniao_id = ?").all(reuniaoId);
+    return rows;
+  },
+
   registerPresencas: function (reuniaoId, presencas) {
     var stmt = db.prepare("INSERT INTO presencas (reuniao_id, membro_id, presente) VALUES (?, ?, ?) ON CONFLICT(reuniao_id, membro_id) DO UPDATE SET presente = ?");
     var tx = db.transaction(function () {

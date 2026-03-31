@@ -121,25 +121,39 @@ Responda EXCLUSIVAMENTE com um JSON válido, sem texto antes ou depois, no forma
 
 REGRAS CRÍTICAS PARA OS TÍTULOS DAS SEÇÕES
 
-1. A PRIMEIRA seção é sempre 'INFORMES' com um ÚNICO elemento no array bullets contendo um parágrafo corrido (sem marcadores) descrevendo: formato da reunião, data por extenso, dia da semana, horário de início e término, número de presentes e ausentes do total de membros ativos, e se o quórum foi atingido. Termine com 'Foram pautas da reunião os seguintes temas:'
+1. A PRIMEIRA seção é sempre 'INFORMES' com um ÚNICO elemento no array bullets contendo um parágrafo corrido (sem marcadores) que DEVE incluir TODOS estes elementos: formato da reunião (virtual/presencial/híbrido), plataforma utilizada, data por extenso com dia da semana, horário de início e término, número de presentes por extenso e em numeral, número de ausentes por extenso e em numeral, total de membros ativos por extenso e em numeral, percentual de quórum por extenso e em numeral, e se o quórum mínimo foi atingido. Termine com 'Foram pautas da reunião os seguintes temas:'
+Exemplo: 'A quinquagésima sétima reunião ordinária do CIE da COIC/CBIC foi realizada em formato virtual, através da plataforma Microsoft Teams, no dia 25 de março de 2026, uma terça-feira, com início às 16h30 e término às 18h00. Estavam presentes 13 (treze) participantes. Foram registradas 8 (oito) ausências de um total de 21 (vinte e um) membros ativos do CIE, atingindo-se o quórum de 62% (sessenta e dois por cento). Foram pautas da reunião os seguintes temas:'
 2. A SEGUNDA seção é sempre 'ABERTURA E BOAS-VINDAS' com bullets descrevendo a abertura
 3. As seções intermediárias devem ter títulos IDÊNTICOS aos itens da PAUTA fornecida. Copie LITERALMENTE, caractere por caractere
 4. A ÚLTIMA seção é SEMPRE 'PALAVRA ABERTA E ENCERRAMENTO'
 
-REGRA DE OURO: UM ASSUNTO POR BULLET
+REGRA DE OURO: UM ASSUNTO POR BULLET, MAS COMPLETO E DETALHADO
 
-Cada bullet deve tratar de UM ÚNICO assunto, fato ou manifestação. Se uma seção aborda 3 temas distintos, deve ter NO MÍNIMO 3 bullets.
+Cada bullet trata de UM assunto, mas deve ser COMPLETO e DETALHADO sobre esse assunto. Bullets curtos e telegráficos são PROIBIDOS. Cada bullet deve ter entre 3 e 5 linhas, incluindo contexto, justificativa, consequências e desdobramentos do ponto tratado.
 
-ERRADO (tudo num bloco só):
+ERRADO (fragmentado e telegráfico):
 'bullets': [
-  'O Sr. Ilso Oliveira deu as boas-vindas aos participantes e justificou o atraso. Na ocasião, foi apresentado o Sr. Eduardo Silvino como novo membro, representando a RETC em substituição ao Sr. Marcus Cassini. O Sr. Eduardo destacou sua posição como Diretor de Operações, colocando-se à disposição para contribuir.'
+  'O Roadshow COIC no RS foi remarcado de abril para 23 de junho.',
+  'O ENIC 2026 será realizado de 19 a 21 de maio no Anhembi.',
+  'O ENIC será um evento pago, com descontos para associados.'
 ]
 
-CORRETO (um assunto por bullet):
+CORRETO (um assunto por bullet, mas completo e narrativo):
 'bullets': [
-  'O Sr. Ilso José de Oliveira (COIC/CBIC) deu as boas-vindas aos participantes e apresentou a pauta do dia, conforme apresentação em anexo.',
-  'Foi apresentado oficialmente o Sr. Eduardo Henrique Silvino (RETC Infraestrutura) como novo membro efetivo do comitê, em substituição ao Sr. Marcus Cassini, que solicitou afastamento devido a compromissos profissionais.',
-  'O Sr. Eduardo Silvino apresentou-se ao grupo, informando sua posição como Diretor de Operações da RETC, responsável pela integração entre escritório e obras, e manifestou disposição para contribuir com as atividades do comitê.'
+  'O Sr. Nícolas Santos (COIC/CBIC) apresentou a revisão completa do calendário de atividades da COIC para 2026, conforme apresentação em anexo, destacando as alterações realizadas desde a apresentação na Reunião Nacional da Construção Industrial de 25 de fevereiro. Entre as mudanças, informou o reagendamento do Roadshow COIC no Rio Grande do Sul, inicialmente previsto para abril, remarcado para 23 de junho de 2026 em comum acordo com as entidades parceiras regionais, considerando ajustes nas agendas dos apoiadores e participantes.',
+  'Em relação ao ENIC 2026, foi confirmada a realização entre os dias 19 e 21 de maio no Distrito Anhembi em São Paulo, mantendo o formato presencial sem transmissão online ao vivo, diferentemente da edição anterior. O evento funcionará independentemente da FEICON, que ocorrerá em abril, sendo pago com descontos especiais para empresas associadas à CBIC, com programação das 10h00 às 18h00 em cada um dos três dias (conforme apresentado).'
+]
+
+ERRADO (tudo misturado num bloco gigante):
+'bullets': [
+  'O Sr. Ilso deu as boas-vindas e apresentou o Eduardo Silvino como novo membro em substituição ao Marcus Cassini. O Eduardo se apresentou como Diretor de Operações da RETC.'
+]
+
+CORRETO (um assunto por bullet, cada um completo):
+'bullets': [
+  'O Sr. Ilso José de Oliveira (COIC/CBIC) deu as boas-vindas aos participantes e apresentou a pauta do dia, informando que a reunião teria duração de 1h30 com término previsto para as 18h00, conforme novo formato adotado a partir desta edição.',
+  'Foi apresentado oficialmente o Sr. Eduardo Henrique Silvino (RETC Infraestrutura) como novo membro efetivo do comitê, em substituição ao Sr. Marcus Cassini, que solicitou afastamento devido a compromissos profissionais conflitantes com o horário das reuniões ordinárias.',
+  'O Sr. Eduardo Silvino apresentou-se ao grupo, informando sua posição como Diretor de Operações da RETC, responsável pela integração entre as operações do escritório e os canteiros de obras, e manifestou disposição em contribuir com o intercâmbio de experiências nos diversos temas debatidos pelo comitê.'
 ]
 
 REGRAS PARA SUB-BULLETS
@@ -157,10 +171,10 @@ ATRIBUIÇÃO E VOZ PASSIVA
 
 DADOS NUMÉRICOS — SEMPRE QUALIFICAR
 
-Todo dado quantitativo que veio de uma fala deve ter qualificador. Isso é OBRIGATÓRIO.
+Todo dado quantitativo que veio de uma fala deve ter qualificador: '(conforme mencionado)', '(conforme registrado)' ou '(conforme apresentado)'.
 
 ERRADO: 'O evento contará com 6.000 m² de área expositiva e espera receber mais de 5.000 participantes.'
-CORRETO: 'O evento contará com 6.000 m² de área expositiva e expectativa de receber mais de 5.000 participantes (conforme apresentado).'
+CORRETO: 'O evento contará com área expositiva de 6.000 m² e expectativa de receber mais de 5.000 participantes (conforme apresentado).'
 
 NÃO qualifique datas, nomes de entidades ou informações institucionais já conhecidas.
 
@@ -177,21 +191,21 @@ CORRETO: 'Cláudio Freitas informou que...'
 
 IMPARCIALIDADE — PROIBIÇÕES ABSOLUTAS
 
-As seguintes palavras e expressões são PROIBIDAS na súmula:
+Palavras e expressões PROIBIDAS:
 - Adjetivos avaliativos: 'calorosamente', 'brilhante', 'excelente', 'generoso', 'importante'
 - Advérbios editoriais: 'infelizmente', 'prontamente', 'felizmente', 'lamentavelmente'
-- Anedotas: pausas para café, piadas, comentários informais
+- Anedotas irrelevantes: pausas para café, idas ao banheiro, pedidos de pausa pessoal, comentários informais, piadas. NÃO registre nada que não tenha relevância institucional
 - Editorializações: 'demonstrando ambiente cordial', 'em tom colaborativo', 'comprometendo-se'
 
 ERRADO: 'O Sr. Ilso Oliveira lamentou infelizmente o falecimento do Sr. Kleber Ricardo'
 CORRETO: 'O Sr. Ilso Oliveira registrou o falecimento do Sr. Kleber Ricardo, presidente do SINDUSCON-MS'
 
+ERRADO: 'O Sr. Leonardo Scarpelli solicitou breve pausa durante a reunião'
+CORRETO: não incluir — pausa pessoal não tem relevância institucional
+
 REFERÊNCIA A SLIDES — OBRIGATÓRIO QUANDO HOUVER APRESENTAÇÃO
 
 Se a transcrição menciona uso de slides ou material projetado, o PRIMEIRO bullet da seção DEVE conter 'conforme apresentação em anexo'.
-
-ERRADO: 'O Sr. Nícolas Santos apresentou a revisão completa do calendário de atividades.'
-CORRETO: 'O Sr. Nícolas Santos (COIC/CBIC) apresentou a revisão completa do calendário de atividades da COIC para 2026, conforme apresentação em anexo.'
 
 PALAVRA ABERTA E ENCERRAMENTO — REGRAS ESTRITAS
 
@@ -199,7 +213,7 @@ Cada pessoa que se manifestou = um bullet separado. NUNCA misture falas de pesso
 
 ERRADO (tudo junto):
 'bullets': [
-  'O Sr. Oscar Simonsen informou que precisaria sair às 17h15. O Sr. Gustavo Bado também comunicou saída às 17h45. Não havendo outras manifestações, a reunião foi encerrada.'
+  'O Sr. Oscar Simonsen informou que precisaria sair às 17h15. O Sr. Gustavo Bado também comunicou saída às 17h45. A reunião foi encerrada.'
 ]
 
 CORRETO (separado por pessoa):
@@ -209,10 +223,14 @@ CORRETO (separado por pessoa):
   'Não havendo outras manifestações, a reunião foi encerrada pelo Sr. Ilso Oliveira, com orientação para acompanhamento das próximas atividades pelos canais oficiais da COIC.'
 ]
 
+COMPLETUDE — NÃO CORTE INFORMAÇÃO
+
+Todas as informações relevantes mencionadas na transcrição devem ser registradas. NÃO omita detalhes por brevidade. Se o apresentador mencionou um desdobramento, uma justificativa ou uma consequência, registre. Se mencionou entidades parceiras, nomes de apoiadores ou detalhes operacionais, registre. A súmula é um documento oficial e deve ser COMPLETA.
+
 ESTILO GERAL
 
 - Verbos no pretérito perfeito: 'apresentou', 'informou', 'deliberou', 'sugeriu', 'questionou', 'esclareceu', 'registrou'
-- Cada bullet: 1 a 3 linhas, frase completa
+- Cada bullet: 3 a 5 linhas, frase completa com contexto e detalhamento
 - Encaminhamentos: 'Ação — Responsável: Nome (Empresa) — Prazo: DD/MM/AAAA'
 - Se informação ambígua, omitir em vez de inventar
 - NÃO repetir a mesma informação em seções diferentes

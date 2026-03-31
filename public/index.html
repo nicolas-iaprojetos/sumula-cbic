@@ -133,23 +133,74 @@ REGRAS PARA BULLETS E SUB-BULLETS
 - Bullets de nível 0 (principais): texto direto, sem prefixo
 - Bullets de nível 1 (sub-bullets): DEVEM começar com '>>' (dois sinais de maior)
 - CADA sub-bullet deve ser um elemento INDIVIDUAL no array — NUNCA concatene vários sub-bullets em uma única string
+- Após um ou mais sub-bullets, o próximo bullet sem '>>' volta ao nível 0
+- Para temas técnicos com múltiplos desdobramentos, organize os sub-bullets com letras: '>> a) Primeiro ponto...', '>> b) Segundo ponto...', '>> c) Terceiro ponto...'
+
+ESTILO DE REDAÇÃO — REGRAS FUNDAMENTAIS
+
+1. ATRIBUIÇÃO DIRETA OBRIGATÓRIA
+   - Toda informação relevante deve ser atribuída a quem a apresentou ou mencionou
+   - Use atribuição direta na maioria dos bullets: 'O Sr. Fulano apresentou...', 'O Sr. Fulano informou...'
+   - A voz passiva ('Foi apresentado...', 'Foi informado...') é permitida ocasionalmente para evitar repetição excessiva do nome do mesmo apresentador numa seção, mas NUNCA deve ser o padrão predominante
+   - Numa seção com 5 bullets do mesmo apresentador, alterne: 2-3 com atribuição direta, 1-2 com voz passiva
+   - NUNCA use voz passiva quando houver mudança de interlocutor — sempre atribua diretamente
+
+2. QUALIFICAÇÃO DE DADOS NUMÉRICOS
+   - Dados quantitativos mencionados nas falas devem ser qualificados com expressões como '(conforme mencionado)', '(conforme registrado)' ou '(conforme apresentado)'
+   - Isso sinaliza que o dado veio da fala do participante e não é uma afirmação categórica
+   - Exemplo: 'O Sr. Fulano informou expectativa de R$ 800 bilhões em investimentos (conforme mencionado)'
+   - NÃO qualifique informações institucionais já conhecidas (datas de eventos, nomes de entidades)
+
+3. REGISTRO DE INTERAÇÕES E DEBATES
+   - Capture questionamentos, esclarecimentos e debates entre os participantes
+   - Registre quem perguntou e quem respondeu: 'O Sr. Fulano questionou sobre [tema] e o Sr. Beltrano esclareceu que...'
+   - Se houve discussão entre membros, registre as posições em bullets separados
+   - Cada interação relevante deve ser um bullet próprio
+
+4. IMPARCIALIDADE ABSOLUTA — SEM ADJETIVAÇÃO EDITORIAL
+   - PROIBIDO usar adjetivos avaliativos: 'calorosamente', 'brilhante', 'excelente', 'generoso', 'importante contribuição'
+   - PROIBIDO registrar anedotas irrelevantes (pausas para café, comentários informais, piadas)
+   - PROIBIDO editorializações como 'demonstrando o ambiente cordial', 'em tom colaborativo'
+   - Use tom factual e seco: registre O QUE foi dito, POR QUEM, sem avaliar COMO foi dito
+   - Onde a versão editorial diria 'descontos generosos', escreva 'descontos especiais para associados'
+
+5. REFERÊNCIA A SLIDES E APRESENTAÇÕES
+   - Quando o apresentador utilizou slides ou material visual, referencie: 'conforme apresentação em anexo'
+   - Use esta referência no primeiro bullet da seção que teve apresentação de slides
+   - NÃO descreva o conteúdo visual dos slides — apenas o conteúdo falado
 
 FORMATO DOS NOMES
 
 - PRIMEIRA menção de cada participante: Nome Completo (Empresa)
+  Exemplos: 'Cláudio Freitas (Qualidados)', 'Ricardo Fabel (Tractebel)', 'Leonardo Scarpelli (FDC)'
 - Menções SUBSEQUENTES: usar forma curta — primeiro nome + sobrenome, sem empresa
-- NUNCA use apenas o sobrenome isolado
-- O Presidente da COIC (Ilso José de Oliveira) pode ser referido como 'o Presidente' após a primeira menção
+  Exemplos: 'Cláudio Freitas', 'Ricardo Fabel', 'Leonardo Scarpelli'
+- NUNCA use o nome completo de certidão nas menções subsequentes (errado: 'Alexandre Nícolas Dantas dos Santos'; correto: 'Nícolas Santos')
+- NUNCA use apenas o sobrenome isolado (ex: 'Freitas disse que...' está ERRADO)
+- O Presidente da COIC (Ilso José de Oliveira) pode ser referido como 'o Presidente' ou 'Sr. Ilso Oliveira' após a primeira menção
 
-ESTILO DE REDAÇÃO
+ESTILO GERAL
 
-- Tom institucional, formal porém acessível
-- Verbos no pretérito perfeito: 'apresentou', 'informou', 'deliberou', 'sugeriu'
+- Verbos no pretérito perfeito: 'apresentou', 'informou', 'deliberou', 'sugeriu', 'questionou', 'esclareceu'
 - Cada bullet: 1 a 3 linhas, frase completa
-- NÃO gere cabeçalho, número da reunião, data, local ou lista de presentes
-- NÃO gere seção 'ANEXO' ou 'ANEXOS'
+- Encaminhamentos com responsável e prazo quando disponíveis: 'Ação — Responsável: Nome (Empresa) — Prazo: DD/MM/AAAA'
+- Se uma informação estiver ambígua, omitir em vez de inventar
+- NÃO repetir a mesma informação em seções diferentes
+
+SEÇÃO PALAVRA ABERTA E ENCERRAMENTO — REGRAS ESPECÍFICAS
+
+- Registre cada manifestação como um bullet SEPARADO com atribuição direta
+- Se houve questionamento, registre pergunta e resposta em bullets distintos
+- Saídas antecipadas: 'O Sr. Fulano informou necessidade de saída antecipada às [horário] devido a compromisso externo'
+- O encerramento deve ser o último bullet: 'Não havendo outras manifestações, a reunião foi encerrada pelo Sr. [nome]'
+- NUNCA misture múltiplas manifestações em um único bullet longo
+
+O QUE NÃO INCLUIR
+
+- NÃO gere cabeçalho, número da reunião, data, local ou lista de presentes (preenchidos pelo sistema)
+- NÃO gere seção 'ANEXO' ou 'ANEXOS' (gerenciada separadamente)
 - NÃO inclua texto fora do JSON
-- NÃO use markdown dentro do JSON`;
+- NÃO use markdown dentro do JSON (sem **, ##, etc.)`;
 
 const uid = () => "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const norm = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();

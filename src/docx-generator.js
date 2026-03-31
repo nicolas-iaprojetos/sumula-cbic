@@ -480,7 +480,7 @@ async function generateSumula(data) {
 
   docXml = cleanEmptyApresentador(docXml);
   docXml = postProcess(docXml, secoes);
-  docXml = docXml.replace(/\\'/g, "'");
+  docXml = docXml.replace(/\\'/g, String.fromCharCode(39));
 
   if (hasImages) {
     docXml = insertAnexoImages(outputZip, docXml, data.anexo_images);

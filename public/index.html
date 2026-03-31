@@ -113,7 +113,6 @@ Responda EXCLUSIVAMENTE com um JSON válido, sem texto antes ou depois, no forma
       'bullets': [
         'Texto do bullet principal (nível 0)',
         '>> Texto do sub-bullet (nível 1)',
-        '>> Outro sub-bullet (nível 1)',
         'Outro bullet principal (nível 0)'
       ]
     }
@@ -122,85 +121,109 @@ Responda EXCLUSIVAMENTE com um JSON válido, sem texto antes ou depois, no forma
 
 REGRAS CRÍTICAS PARA OS TÍTULOS DAS SEÇÕES
 
-1. A PRIMEIRA seção é sempre 'INFORMES' com um parágrafo corrido (sem bullets) descrevendo: formato da reunião, data por extenso, dia da semana, horário de início e término, número de presentes e ausentes do total de membros ativos, e se o quórum foi atingido. Termine com 'Foram pautas da reunião os seguintes temas:'
-2. A SEGUNDA seção é sempre 'ABERTURA E BOAS-VINDAS' com bullets descrevendo como a reunião foi aberta, quem conduziu e o objetivo geral da reunião
-3. As seções intermediárias devem ter títulos IDÊNTICOS aos itens da PAUTA fornecida. Copie o texto da pauta LITERALMENTE, caractere por caractere. NÃO resuma, NÃO parafraseie, NÃO renomeie, NÃO adicione numeração
-4. A ÚLTIMA seção é SEMPRE 'PALAVRA ABERTA E ENCERRAMENTO' — gere esta seção mesmo que a transcrição não registre falas nesse momento. Nesse caso, use um bullet padrão como: 'Não havendo mais manifestações, o Presidente agradeceu a participação de todos e encerrou a reunião.'
+1. A PRIMEIRA seção é sempre 'INFORMES' com um ÚNICO elemento no array bullets contendo um parágrafo corrido (sem marcadores) descrevendo: formato da reunião, data por extenso, dia da semana, horário de início e término, número de presentes e ausentes do total de membros ativos, e se o quórum foi atingido. Termine com 'Foram pautas da reunião os seguintes temas:'
+2. A SEGUNDA seção é sempre 'ABERTURA E BOAS-VINDAS' com bullets descrevendo a abertura
+3. As seções intermediárias devem ter títulos IDÊNTICOS aos itens da PAUTA fornecida. Copie LITERALMENTE, caractere por caractere
+4. A ÚLTIMA seção é SEMPRE 'PALAVRA ABERTA E ENCERRAMENTO'
 
-REGRAS PARA BULLETS E SUB-BULLETS
+REGRA DE OURO: UM ASSUNTO POR BULLET
 
-- Cada bullet é um elemento SEPARADO no array 'bullets'
-- Bullets de nível 0 (principais): texto direto, sem prefixo
-- Bullets de nível 1 (sub-bullets): DEVEM começar com '>>' (dois sinais de maior)
-- CADA sub-bullet deve ser um elemento INDIVIDUAL no array — NUNCA concatene vários sub-bullets em uma única string
-- Após um ou mais sub-bullets, o próximo bullet sem '>>' volta ao nível 0
-- Para temas técnicos com múltiplos desdobramentos, organize os sub-bullets com letras: '>> a) Primeiro ponto...', '>> b) Segundo ponto...', '>> c) Terceiro ponto...'
+Cada bullet deve tratar de UM ÚNICO assunto, fato ou manifestação. Se uma seção aborda 3 temas distintos, deve ter NO MÍNIMO 3 bullets.
 
-ESTILO DE REDAÇÃO — REGRAS FUNDAMENTAIS
+ERRADO (tudo num bloco só):
+'bullets': [
+  'O Sr. Ilso Oliveira deu as boas-vindas aos participantes e justificou o atraso. Na ocasião, foi apresentado o Sr. Eduardo Silvino como novo membro, representando a RETC em substituição ao Sr. Marcus Cassini. O Sr. Eduardo destacou sua posição como Diretor de Operações, colocando-se à disposição para contribuir.'
+]
 
-1. ATRIBUIÇÃO DIRETA OBRIGATÓRIA
-   - Toda informação relevante deve ser atribuída a quem a apresentou ou mencionou
-   - Use atribuição direta na maioria dos bullets: 'O Sr. Fulano apresentou...', 'O Sr. Fulano informou...'
-   - A voz passiva ('Foi apresentado...', 'Foi informado...') é permitida ocasionalmente para evitar repetição excessiva do nome do mesmo apresentador numa seção, mas NUNCA deve ser o padrão predominante
-   - Numa seção com 5 bullets do mesmo apresentador, alterne: 2-3 com atribuição direta, 1-2 com voz passiva
-   - NUNCA use voz passiva quando houver mudança de interlocutor — sempre atribua diretamente
+CORRETO (um assunto por bullet):
+'bullets': [
+  'O Sr. Ilso José de Oliveira (COIC/CBIC) deu as boas-vindas aos participantes e apresentou a pauta do dia, conforme apresentação em anexo.',
+  'Foi apresentado oficialmente o Sr. Eduardo Henrique Silvino (RETC Infraestrutura) como novo membro efetivo do comitê, em substituição ao Sr. Marcus Cassini, que solicitou afastamento devido a compromissos profissionais.',
+  'O Sr. Eduardo Silvino apresentou-se ao grupo, informando sua posição como Diretor de Operações da RETC, responsável pela integração entre escritório e obras, e manifestou disposição para contribuir com as atividades do comitê.'
+]
 
-2. QUALIFICAÇÃO DE DADOS NUMÉRICOS
-   - Dados quantitativos mencionados nas falas devem ser qualificados com expressões como '(conforme mencionado)', '(conforme registrado)' ou '(conforme apresentado)'
-   - Isso sinaliza que o dado veio da fala do participante e não é uma afirmação categórica
-   - Exemplo: 'O Sr. Fulano informou expectativa de R$ 800 bilhões em investimentos (conforme mencionado)'
-   - NÃO qualifique informações institucionais já conhecidas (datas de eventos, nomes de entidades)
+REGRAS PARA SUB-BULLETS
 
-3. REGISTRO DE INTERAÇÕES E DEBATES
-   - Capture questionamentos, esclarecimentos e debates entre os participantes
-   - Registre quem perguntou e quem respondeu: 'O Sr. Fulano questionou sobre [tema] e o Sr. Beltrano esclareceu que...'
-   - Se houve discussão entre membros, registre as posições em bullets separados
-   - Cada interação relevante deve ser um bullet próprio
+- Sub-bullets começam com '>>' e devem ser elementos INDIVIDUAIS no array
+- Use sub-bullets com letras para temas técnicos: '>> a) Primeiro ponto...', '>> b) Segundo ponto...'
+- Após sub-bullets, o próximo bullet sem '>>' volta ao nível 0
 
-4. IMPARCIALIDADE ABSOLUTA — SEM ADJETIVAÇÃO EDITORIAL
-   - PROIBIDO usar adjetivos avaliativos: 'calorosamente', 'brilhante', 'excelente', 'generoso', 'importante contribuição'
-   - PROIBIDO registrar anedotas irrelevantes (pausas para café, comentários informais, piadas)
-   - PROIBIDO editorializações como 'demonstrando o ambiente cordial', 'em tom colaborativo'
-   - Use tom factual e seco: registre O QUE foi dito, POR QUEM, sem avaliar COMO foi dito
-   - Onde a versão editorial diria 'descontos generosos', escreva 'descontos especiais para associados'
+ATRIBUIÇÃO E VOZ PASSIVA
 
-5. REFERÊNCIA A SLIDES E APRESENTAÇÕES
-   - Quando o apresentador utilizou slides ou material visual, referencie: 'conforme apresentação em anexo'
-   - Use esta referência no primeiro bullet da seção que teve apresentação de slides
-   - NÃO descreva o conteúdo visual dos slides — apenas o conteúdo falado
+- Atribuição direta é o padrão: 'O Sr. Fulano apresentou...', 'O Sr. Fulano informou...'
+- Voz passiva permitida OCASIONALMENTE para evitar repetição do mesmo nome numa seção longa
+- Proporção: 2-3 bullets com atribuição direta para cada 1 com voz passiva
+- NUNCA voz passiva quando muda o interlocutor
 
-FORMATO DOS NOMES
+DADOS NUMÉRICOS — SEMPRE QUALIFICAR
 
-- PRIMEIRA menção de cada participante: Nome Completo (Empresa)
-  Exemplos: 'Cláudio Freitas (Qualidados)', 'Ricardo Fabel (Tractebel)', 'Leonardo Scarpelli (FDC)'
-- Menções SUBSEQUENTES: usar forma curta — primeiro nome + sobrenome, sem empresa
-  Exemplos: 'Cláudio Freitas', 'Ricardo Fabel', 'Leonardo Scarpelli'
-- NUNCA use o nome completo de certidão nas menções subsequentes (errado: 'Alexandre Nícolas Dantas dos Santos'; correto: 'Nícolas Santos')
-- NUNCA use apenas o sobrenome isolado (ex: 'Freitas disse que...' está ERRADO)
-- O Presidente da COIC (Ilso José de Oliveira) pode ser referido como 'o Presidente' ou 'Sr. Ilso Oliveira' após a primeira menção
+Todo dado quantitativo que veio de uma fala deve ter qualificador. Isso é OBRIGATÓRIO.
+
+ERRADO: 'O evento contará com 6.000 m² de área expositiva e espera receber mais de 5.000 participantes.'
+CORRETO: 'O evento contará com 6.000 m² de área expositiva e expectativa de receber mais de 5.000 participantes (conforme apresentado).'
+
+NÃO qualifique datas, nomes de entidades ou informações institucionais já conhecidas.
+
+NOMES — FORMA CURTA OBRIGATÓRIA
+
+PRIMEIRA menção: Nome Completo (Empresa). Ex: 'Ilso José de Oliveira (COIC/CBIC)'
+Menções SEGUINTES: forma curta. Ex: 'Sr. Ilso Oliveira' ou 'o Presidente'
+
+ERRADO na segunda menção: 'O Sr. Alexandre Nícolas Dantas dos Santos'
+CORRETO na segunda menção: 'O Sr. Nícolas Santos' ou 'Nícolas Santos'
+
+ERRADO: usar só sobrenome: 'Freitas informou que...'
+CORRETO: 'Cláudio Freitas informou que...'
+
+IMPARCIALIDADE — PROIBIÇÕES ABSOLUTAS
+
+As seguintes palavras e expressões são PROIBIDAS na súmula:
+- Adjetivos avaliativos: 'calorosamente', 'brilhante', 'excelente', 'generoso', 'importante'
+- Advérbios editoriais: 'infelizmente', 'prontamente', 'felizmente', 'lamentavelmente'
+- Anedotas: pausas para café, piadas, comentários informais
+- Editorializações: 'demonstrando ambiente cordial', 'em tom colaborativo', 'comprometendo-se'
+
+ERRADO: 'O Sr. Ilso Oliveira lamentou infelizmente o falecimento do Sr. Kleber Ricardo'
+CORRETO: 'O Sr. Ilso Oliveira registrou o falecimento do Sr. Kleber Ricardo, presidente do SINDUSCON-MS'
+
+REFERÊNCIA A SLIDES — OBRIGATÓRIO QUANDO HOUVER APRESENTAÇÃO
+
+Se a transcrição menciona uso de slides ou material projetado, o PRIMEIRO bullet da seção DEVE conter 'conforme apresentação em anexo'.
+
+ERRADO: 'O Sr. Nícolas Santos apresentou a revisão completa do calendário de atividades.'
+CORRETO: 'O Sr. Nícolas Santos (COIC/CBIC) apresentou a revisão completa do calendário de atividades da COIC para 2026, conforme apresentação em anexo.'
+
+PALAVRA ABERTA E ENCERRAMENTO — REGRAS ESTRITAS
+
+Cada pessoa que se manifestou = um bullet separado. NUNCA misture falas de pessoas diferentes no mesmo bullet.
+
+ERRADO (tudo junto):
+'bullets': [
+  'O Sr. Oscar Simonsen informou que precisaria sair às 17h15. O Sr. Gustavo Bado também comunicou saída às 17h45. Não havendo outras manifestações, a reunião foi encerrada.'
+]
+
+CORRETO (separado por pessoa):
+'bullets': [
+  'O Sr. Oscar Simonsen (ABEMI) informou necessidade de saída antecipada às 17h15 devido a compromisso externo, permanecendo conectado via dispositivo móvel.',
+  'O Sr. Gustavo Bado (Estrutural) comunicou necessidade de saída às 17h45 para atender compromisso profissional.',
+  'Não havendo outras manifestações, a reunião foi encerrada pelo Sr. Ilso Oliveira, com orientação para acompanhamento das próximas atividades pelos canais oficiais da COIC.'
+]
 
 ESTILO GERAL
 
-- Verbos no pretérito perfeito: 'apresentou', 'informou', 'deliberou', 'sugeriu', 'questionou', 'esclareceu'
+- Verbos no pretérito perfeito: 'apresentou', 'informou', 'deliberou', 'sugeriu', 'questionou', 'esclareceu', 'registrou'
 - Cada bullet: 1 a 3 linhas, frase completa
-- Encaminhamentos com responsável e prazo quando disponíveis: 'Ação — Responsável: Nome (Empresa) — Prazo: DD/MM/AAAA'
-- Se uma informação estiver ambígua, omitir em vez de inventar
+- Encaminhamentos: 'Ação — Responsável: Nome (Empresa) — Prazo: DD/MM/AAAA'
+- Se informação ambígua, omitir em vez de inventar
 - NÃO repetir a mesma informação em seções diferentes
-
-SEÇÃO PALAVRA ABERTA E ENCERRAMENTO — REGRAS ESPECÍFICAS
-
-- Registre cada manifestação como um bullet SEPARADO com atribuição direta
-- Se houve questionamento, registre pergunta e resposta em bullets distintos
-- Saídas antecipadas: 'O Sr. Fulano informou necessidade de saída antecipada às [horário] devido a compromisso externo'
-- O encerramento deve ser o último bullet: 'Não havendo outras manifestações, a reunião foi encerrada pelo Sr. [nome]'
-- NUNCA misture múltiplas manifestações em um único bullet longo
 
 O QUE NÃO INCLUIR
 
-- NÃO gere cabeçalho, número da reunião, data, local ou lista de presentes (preenchidos pelo sistema)
-- NÃO gere seção 'ANEXO' ou 'ANEXOS' (gerenciada separadamente)
+- NÃO gere cabeçalho, número da reunião, data, local ou lista de presentes
+- NÃO gere seção 'ANEXO' ou 'ANEXOS'
 - NÃO inclua texto fora do JSON
-- NÃO use markdown dentro do JSON (sem **, ##, etc.)`;
+- NÃO use markdown dentro do JSON (sem **, ##, etc.)
+- NÃO use aspas com barra invertida dentro do texto dos bullets. Se precisar citar um nome de painel ou evento, escreva sem aspas`;
 
 const uid = () => "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const norm = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();

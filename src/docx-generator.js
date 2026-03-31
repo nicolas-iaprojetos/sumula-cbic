@@ -188,7 +188,7 @@ function postProcess(xml, secoes) {
   }
 
   // Step 3: For each section, determine content range (paragraphs to replace)
-  var spacer = '<w:p><w:pPr><w:spacing w:after="60"/></w:pPr></w:p>';
+  var spacer = '<w:p><w:pPr><w:spacing w:after="240"/></w:pPr></w:p>';
 
   // Process from BOTTOM to TOP so earlier indices stay valid
   for (var h = sectionMap.length - 1; h >= 0; h--) {
@@ -240,9 +240,9 @@ function postProcess(xml, secoes) {
     var replaceFrom = paragraphs[headlineIdx].start;
     var replaceTo = paragraphs[contentEnd - 1].end;
 
-    var spacerBefore = spacer;
-    var spacerAfter = '<w:p><w:pPr><w:spacing w:after="60"/></w:pPr></w:p>';
-    var newXml = spacerBefore + headlineParaXml + spacerAfter + bulletXml;
+    var isLastSection = (h === sectionMap.length - 1);
+    var spacerTrailing = isLastSection ? spacer : '';
+    var newXml = spacer + headlineParaXml + spacer + bulletXml + spacerTrailing;
 
     xml = xml.substring(0, replaceFrom) + newXml + xml.substring(replaceTo);
 

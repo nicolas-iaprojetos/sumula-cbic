@@ -17,7 +17,8 @@ db.exec(
   "CREATE TABLE IF NOT EXISTS membros (id TEXT PRIMARY KEY, gt_id TEXT NOT NULL REFERENCES gts(id) ON DELETE CASCADE, nome TEXT NOT NULL, nome_completo TEXT DEFAULT '', email TEXT DEFAULT '', telefone TEXT DEFAULT '', empresa TEXT DEFAULT '', funcao TEXT DEFAULT '', grupo TEXT DEFAULT '', ativo INTEGER DEFAULT 1, created_at DATETIME DEFAULT CURRENT_TIMESTAMP);" +
   "CREATE TABLE IF NOT EXISTS reunioes (id TEXT PRIMARY KEY, gt_id TEXT NOT NULL REFERENCES gts(id) ON DELETE CASCADE, nome TEXT NOT NULL, edicao TEXT DEFAULT '', data TEXT NOT NULL, horario TEXT DEFAULT '', local_ TEXT DEFAULT '', created_at DATETIME DEFAULT CURRENT_TIMESTAMP);" +
   "CREATE TABLE IF NOT EXISTS presencas (id INTEGER PRIMARY KEY AUTOINCREMENT, reuniao_id TEXT NOT NULL REFERENCES reunioes(id) ON DELETE CASCADE, membro_id TEXT NOT NULL REFERENCES membros(id) ON DELETE CASCADE, presente INTEGER NOT NULL DEFAULT 0, UNIQUE(reuniao_id, membro_id));" +
-  "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);"
+  "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);" +
+  "CREATE TABLE IF NOT EXISTS direcionamentos (id INTEGER PRIMARY KEY AUTOINCREMENT, gt_id TEXT NOT NULL, reuniao_origem TEXT NOT NULL, reuniao_data TEXT, tipo TEXT NOT NULL CHECK(tipo IN ('deliberacao','encaminhamento','compromisso','risco')), titulo TEXT NOT NULL, descricao TEXT, responsavel TEXT, prazo TEXT, status TEXT NOT NULL DEFAULT 'pendente' CHECK(status IN ('pendente','em_andamento','concluido')), temas TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP);"
 );
 
 function uid() {
@@ -172,5 +173,65 @@ module.exports = {
       }
     });
     tx();
+  },
+
+  // ── Direcionamentos (Radar Estratégico) ──
+  getDirecionamentos: function (gtId, filters) {
+    var sql = "SELECT * FROM direcionamentos WHERE gt_id = ?";
+    var params = [gtId];
+    if (filters && filters.status) {
+      sql += " AND status = ?";
+      params.push(filters.status);
+    }
+    if (filters && filters.tipo) {
+      sql += " AND tipo = ?";
+      params.push(filters.tipo);
+    }
+    sql += " ORDER BY created_at DESC";
+    return db.prepare(sql).all(params);
+  },
+
+  createDirecionamento: function (d) {
+    var stmt = db.prepare("INSERT INTO direcionamentos (gt_id, reuniao_origem, reuniao_data, tipo, titulo, descricao, responsavel, prazo, status, temas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    var info = stmt.run(d.gt_id, d.reuniao_origem, d.reuniao_data || "", d.tipo, d.titulo, d.descricao || "", d.responsavel || "", d.prazo || "", d.status || "pendente", d.temas || "");
+    return { id: info.lastInsertRowid, titulo: d.titulo, tipo: d.tipo };
+  },
+
+  createDirecionamentosBatch: function (items) {
+    var stmt = db.prepare("INSERT INTO direcionamentos (gt_id, reuniao_origem, reuniao_data, tipo, titulo, descricao, responsavel, prazo, status, temas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    var tx = db.transaction(function () {
+      var results = [];
+      for (var i = 0; i < items.length; i++) {
+        var d = items[i];
+        var info = stmt.run(d.gt_id, d.reuniao_origem, d.reuniao_data || "", d.tipo, d.titulo, d.descricao || "", d.responsavel || "", d.prazo || "", d.status || "pendente", d.temas || "");
+        results.push({ id: info.lastInsertRowid, titulo: d.titulo, tipo: d.tipo });
+      }
+      return results;
+    });
+    return tx();
+  },
+
+  updateDirecionamento: function (id, d) {
+    var fields = [];
+    var params = [];
+    var allowed = ["tipo", "titulo", "descricao", "responsavel", "prazo", "status", "temas"];
+    for (var i = 0; i < allowed.length; i++) {
+      if (d[allowed[i]] !== undefined) {
+        fields.push(allowed[i] + " = ?");
+        params.push(d[allowed[i]]);
+      }
+    }
+    if (fields.length === 0) return;
+    fields.push("updated_at = CURRENT_TIMESTAMP");
+    params.push(id);
+    db.prepare("UPDATE direcionamentos SET " + fields.join(", ") + " WHERE id = ?").run(params);
+  },
+
+  deleteDirecionamento: function (id) {
+    db.prepare("DELETE FROM direcionamentos WHERE id = ?").run(id);
+  },
+
+  getUltimasReunioes: function (gtId, limit) {
+    return db.prepare("SELECT * FROM reunioes WHERE gt_id = ? ORDER BY data DESC LIMIT ?").all(gtId, limit || 5);
   }
 };

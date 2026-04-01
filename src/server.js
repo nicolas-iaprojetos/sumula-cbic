@@ -212,6 +212,178 @@ app.put("/api/settings", (req, res) => {
   db.saveSettings(req.body);
   res.json({ ok: true });
 });
+// ── Direcionamentos (Radar Estratégico) ──
+app.get("/api/gts/:gtId/direcionamentos", (req, res) => {
+  var filters = {};
+  if (req.query.status) filters.status = req.query.status;
+  if (req.query.tipo) filters.tipo = req.query.tipo;
+  res.json(db.getDirecionamentos(req.params.gtId, filters));
+});
+
+app.post("/api/direcionamentos/extrair", async (req, res) => {
+  try {
+    var settings = db.getSettings();
+    var apiKey = req.body.apiKey || settings.apiKey || "";
+    var provider = settings.provider || "anthropic";
+    var model = settings.model || "claude-sonnet-4-20250514";
+    var texto = req.body.texto || "";
+    var gtId = req.body.gtId || "";
+    var reuniaoOrigem = req.body.reuniao_origem || "";
+    var reuniaoData = req.body.reuniao_data || "";
+
+    if (!texto || !gtId) {
+      return res.status(400).json({ error: "texto e gtId sao obrigatorios" });
+    }
+
+    var promptExtracao = 'Analise o texto abaixo (sumula/ata de reuniao) e extraia TODOS os direcionamentos encontrados.\n\nClassifique cada item em um dos tipos:\n- deliberacao: decisoes tomadas pelo grupo\n- encaminhamento: acoes delegadas a alguem\n- compromisso: compromissos assumidos com prazo\n- risco: riscos ou alertas identificados\n\nPara cada item extraido, retorne:\n- tipo (deliberacao|encaminhamento|compromisso|risco)\n- titulo (frase curta e objetiva)\n- descricao (detalhamento do item)\n- responsavel (nome da pessoa ou entidade responsavel, se mencionado)\n- prazo (data ou periodo, se mencionado)\n- temas (palavras-chave separadas por virgula)\n\nRetorne APENAS um JSON valido no formato:\n{"direcionamentos":[{"tipo":"...","titulo":"...","descricao":"...","responsavel":"...","prazo":"...","temas":"..."}]}\n\nNao inclua explicacoes, apenas o JSON.\n\nTexto da sumula:\n' + texto;
+
+    var aiMessages = [{ role: "user", content: promptExtracao }];
+    var aiResult;
+
+    if (provider === "anthropic") {
+      var response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({ model: model, max_tokens: 4096, messages: aiMessages })
+      });
+      var data = await response.json();
+      if (data.content && data.content[0]) {
+        aiResult = data.content[0].text;
+      } else {
+        return res.status(500).json({ error: "Resposta inesperada da API", details: data });
+      }
+    } else if (provider === "openai") {
+      var response2 = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + apiKey
+        },
+        body: JSON.stringify({ model: model, max_tokens: 4096, messages: aiMessages })
+      });
+      var data2 = await response2.json();
+      if (data2.choices && data2.choices[0]) {
+        aiResult = data2.choices[0].message.content;
+      } else {
+        return res.status(500).json({ error: "Resposta inesperada da API", details: data2 });
+      }
+    } else {
+      return res.status(400).json({ error: "Provedor nao suportado: " + provider });
+    }
+
+    // Parse JSON from AI response
+    var jsonMatch = aiResult.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return res.status(500).json({ error: "AI nao retornou JSON valido", raw: aiResult });
+    }
+    var parsed = JSON.parse(jsonMatch[0]);
+    var direcionamentos = parsed.direcionamentos || [];
+
+    // Save to database
+    var items = [];
+    for (var i = 0; i < direcionamentos.length; i++) {
+      var d = direcionamentos[i];
+      items.push({
+        gt_id: gtId,
+        reuniao_origem: reuniaoOrigem,
+        reuniao_data: reuniaoData,
+        tipo: d.tipo,
+        titulo: d.titulo,
+        descricao: d.descricao || "",
+        responsavel: d.responsavel || "",
+        prazo: d.prazo || "",
+        status: "pendente",
+        temas: d.temas || ""
+      });
+    }
+    var saved = db.createDirecionamentosBatch(items);
+    res.json({ extracted: direcionamentos.length, items: saved });
+  } catch (err) {
+    console.error("Erro extraindo direcionamentos:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/api/direcionamentos/:id", (req, res) => {
+  db.updateDirecionamento(req.params.id, req.body);
+  res.json({ ok: true });
+});
+
+app.delete("/api/direcionamentos/:id", (req, res) => {
+  db.deleteDirecionamento(req.params.id);
+  res.json({ ok: true });
+});
+
+app.post("/api/direcionamentos/sugerir-pauta", async (req, res) => {
+  try {
+    var settings = db.getSettings();
+    var apiKey = req.body.apiKey || settings.apiKey || "";
+    var provider = settings.provider || "anthropic";
+    var model = settings.model || "claude-sonnet-4-20250514";
+    var gtId = req.body.gtId || "";
+
+    if (!gtId) {
+      return res.status(400).json({ error: "gtId e obrigatorio" });
+    }
+
+    // Get pending items
+    var pendentes = db.getDirecionamentos(gtId, { status: "pendente" });
+    var emAndamento = db.getDirecionamentos(gtId, { status: "em_andamento" });
+    var todos = pendentes.concat(emAndamento);
+
+    if (todos.length === 0) {
+      return res.json({ sugestao: "Nao ha direcionamentos pendentes ou em andamento para sugerir pauta." });
+    }
+
+    var listaItens = "";
+    for (var i = 0; i < todos.length; i++) {
+      var item = todos[i];
+      listaItens += "- [" + item.tipo.toUpperCase() + "] " + item.titulo + " (Status: " + item.status + ", Responsavel: " + (item.responsavel || "N/A") + ", Prazo: " + (item.prazo || "N/A") + ")\n";
+    }
+
+    var promptPauta = 'Com base nos direcionamentos pendentes e em andamento listados abaixo, sugira uma pauta estruturada para a proxima reuniao do grupo.\n\nA pauta deve:\n1. Priorizar itens com prazo proximo ou vencido\n2. Agrupar itens por tema quando possivel\n3. Incluir tempo estimado para cada item\n4. Sugerir ordem logica de discussao\n\nDirecionamentos ativos:\n' + listaItens + '\n\nRetorne a sugestao em formato texto estruturado, com horarios sugeridos e responsaveis por apresentar cada ponto.';
+
+    var aiMessages = [{ role: "user", content: promptPauta }];
+    var aiResult;
+
+    if (provider === "anthropic") {
+      var response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({ model: model, max_tokens: 4096, messages: aiMessages })
+      });
+      var data = await response.json();
+      aiResult = (data.content && data.content[0]) ? data.content[0].text : "Erro ao gerar sugestao";
+    } else if (provider === "openai") {
+      var response2 = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + apiKey
+        },
+        body: JSON.stringify({ model: model, max_tokens: 4096, messages: aiMessages })
+      });
+      var data2 = await response2.json();
+      aiResult = (data2.choices && data2.choices[0]) ? data2.choices[0].message.content : "Erro ao gerar sugestao";
+    } else {
+      return res.status(400).json({ error: "Provedor nao suportado: " + provider });
+    }
+
+    res.json({ sugestao: aiResult, total_itens: todos.length });
+  } catch (err) {
+    console.error("Erro sugerindo pauta:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── AI Proxy (evita CORS do browser) ──
 app.post("/api/ai/chat", async (req, res) => {
   try {

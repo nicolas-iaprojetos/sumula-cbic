@@ -339,9 +339,9 @@ const Check = ({ checked, size = 22 }) => (
 const Ic = ({ d, size = 18, color = "currentColor", style: s }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={s}><path d={d} /></svg>
 );
-const ic = { plus: "M12 5v14M5 12h14", x: "M18 6L6 18M6 6l12 12", upload: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12", users: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", clipboard: "M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M9 2h6v4H9z", send: "M22 2L11 13M22 2l-7 20-4-9-9-4z", download: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3", chevR: "M9 18l6-6-6-6", chevL: "M15 18l-6-6 6-6", edit: "M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z", save: "M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8", alert: "M12 9v4M12 17h.01M10.29 3.86l-8.6 14.86A2 2 0 003.4 22h17.2a2 2 0 001.71-3.28l-8.6-14.86a2 2 0 00-3.42 0z", loader: "M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4", check: "M20 6L9 17l-5-5", gear: "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z", eye: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z" };
+const ic = { plus: "M12 5v14M5 12h14", x: "M18 6L6 18M6 6l12 12", upload: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12", users: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2M9 7a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75", clipboard: "M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2M9 2h6v4H9z", send: "M22 2L11 13M22 2l-7 20-4-9-9-4z", download: "M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3", chevR: "M9 18l6-6-6-6", chevL: "M15 18l-6-6 6-6", edit: "M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z", save: "M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2zM17 21v-8H7v8M7 3v5h8", alert: "M12 9v4M12 17h.01M10.29 3.86l-8.6 14.86A2 2 0 003.4 22h17.2a2 2 0 001.71-3.28l-8.6-14.86a2 2 0 00-3.42 0z", loader: "M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4", check: "M20 6L9 17l-5-5", gear: "M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z", eye: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 9a3 3 0 100 6 3 3 0 000-6z", radar: "M12 2a10 10 0 100 20 10 10 0 000-20zM12 6a6 6 0 100 12 6 6 0 000-12zM12 10a2 2 0 100 4 2 2 0 000-4z" };
 const lbl = { fontSize: 12, color: "var(--color-text-secondary)", display: "block", marginBottom: 4 };
-const tabLabels = ["Configurar", "Presença", "Transcrição", "Revisão", "Exportar", "Reuniões"];
+const tabLabels = ["Configurar", "Presença", "Transcrição", "Revisão", "Exportar", "Reuniões", "Radar"];
 
 function MembroForm({ data, onChange, onSave, onCancel, title, saveLabel }) {
   return (
@@ -409,6 +409,14 @@ function SumulasApp() {
   const [reunioesLoading, setReunioesLoading] = useState(false);
   const [expandedReuniao, setExpandedReuniao] = useState(null);
   const [reuniaoPresencas, setReuniaoPresencas] = useState([]);
+  const [radarItems, setRadarItems] = useState([]);
+  const [radarLoading, setRadarLoading] = useState(false);
+  const [radarFilter, setRadarFilter] = useState({ status: '', tipo: '' });
+  const [radarExtracting, setRadarExtracting] = useState(false);
+  const [radarSugestao, setRadarSugestao] = useState('');
+  const [radarSugerindo, setRadarSugerindo] = useState(false);
+  const [radarEditId, setRadarEditId] = useState(null);
+  const [radarExpandedId, setRadarExpandedId] = useState(null);
 
   useEffect(() => { (async () => {
     try { const r = await fetch('/api/gts'); const data = await r.json(); if (Array.isArray(data) && data.length) { setGts(data.map(g => ({ ...g, membros: [] }))); setLoaded(true); return; } } catch {}
@@ -810,6 +818,216 @@ Responda SOMENTE em JSON puro (sem markdown, sem backticks). A última seção d
                 <span>{p.nome_completo || p.nome}</span>
               </div>); })}
             </div>)}
+          </div>);
+        })}
+      </div>)}
+
+      {tab === 6 && (<div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 500, margin: 0 }}>Radar Estratégico</h2>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={async () => {
+              setRadarLoading(true);
+              try {
+                var qs = '?';
+                if (radarFilter.status) qs += 'status=' + radarFilter.status + '&';
+                if (radarFilter.tipo) qs += 'tipo=' + radarFilter.tipo;
+                var r = await fetch('/api/gts/' + selGtId + '/direcionamentos' + qs);
+                var data = await r.json();
+                setRadarItems(Array.isArray(data) ? data : []);
+              } catch(e) { setError('Erro ao carregar radar: ' + e.message); }
+              finally { setRadarLoading(false); }
+            }} style={{ fontSize: 12, padding: '6px 14px' }}>Atualizar</button>
+          </div>
+        </div>
+
+        {/* Filtros */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>Status:</span>
+            <select value={radarFilter.status} onChange={(e) => setRadarFilter({ ...radarFilter, status: e.target.value })} style={{ fontSize: 12, padding: '4px 8px' }}>
+              <option value="">Todos</option>
+              <option value="pendente">Pendente</option>
+              <option value="em_andamento">Em andamento</option>
+              <option value="concluido">Concluído</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>Tipo:</span>
+            <select value={radarFilter.tipo} onChange={(e) => setRadarFilter({ ...radarFilter, tipo: e.target.value })} style={{ fontSize: 12, padding: '4px 8px' }}>
+              <option value="">Todos</option>
+              <option value="deliberacao">Deliberação</option>
+              <option value="encaminhamento">Encaminhamento</option>
+              <option value="compromisso">Compromisso</option>
+              <option value="risco">Risco</option>
+            </select>
+          </div>
+          <div style={{ flex: 1 }} />
+          <button onClick={async () => {
+            var texto = exportarTexto();
+            if (!texto || !texto.trim()) { setError('Gere uma súmula primeiro para extrair direcionamentos.'); return; }
+            setRadarExtracting(true); setError('');
+            try {
+              var resp = await fetch('/api/direcionamentos/extrair', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  texto: texto,
+                  gtId: selGtId,
+                  reuniao_origem: reuniao.nome || gt?.nome || '',
+                  reuniao_data: reuniao.data || ''
+                })
+              });
+              var data = await resp.json();
+              if (data.error) throw new Error(data.error);
+              alert('Extraídos ' + (data.extracted || 0) + ' direcionamentos da súmula.');
+              // Reload
+              var r2 = await fetch('/api/gts/' + selGtId + '/direcionamentos');
+              var items = await r2.json();
+              setRadarItems(Array.isArray(items) ? items : []);
+            } catch(e) { setError('Erro na extração: ' + e.message); }
+            finally { setRadarExtracting(false); }
+          }} disabled={radarExtracting || !sumula} style={{ fontSize: 12, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6, opacity: (radarExtracting || !sumula) ? 0.5 : 1 }}>
+            {radarExtracting ? 'Extraindo...' : 'Extrair da súmula'}
+          </button>
+          <button onClick={async () => {
+            setRadarSugerindo(true); setRadarSugestao(''); setError('');
+            try {
+              var resp = await fetch('/api/direcionamentos/sugerir-pauta', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ gtId: selGtId })
+              });
+              var data = await resp.json();
+              if (data.error) throw new Error(data.error);
+              setRadarSugestao(data.sugestao || 'Nenhuma sugestão disponível.');
+            } catch(e) { setError('Erro ao sugerir pauta: ' + e.message); }
+            finally { setRadarSugerindo(false); }
+          }} disabled={radarSugerindo} style={{ fontSize: 12, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6, opacity: radarSugerindo ? 0.5 : 1 }}>
+            {radarSugerindo ? 'Gerando...' : 'Sugerir pauta'}
+          </button>
+        </div>
+
+        {/* Sugestão de pauta */}
+        {radarSugestao && (
+          <div style={{ background: 'var(--color-background-info)', border: '0.5px solid var(--color-border-info)', borderRadius: 'var(--border-radius-lg)', padding: '14px 16px', marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-info)' }}>Sugestão de pauta para próxima reunião</div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={() => { navigator.clipboard.writeText(radarSugestao); }} style={{ fontSize: 11, padding: '3px 10px' }}>Copiar</button>
+                <button onClick={() => setRadarSugestao('')} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-text-tertiary)', padding: 2 }}><Ic d={ic.x} size={14} /></button>
+              </div>
+            </div>
+            <pre style={{ fontSize: 12, fontFamily: 'var(--font-sans)', whiteSpace: 'pre-wrap', lineHeight: 1.7, color: 'var(--color-text-secondary)', margin: 0 }}>{radarSugestao}</pre>
+          </div>
+        )}
+
+        {/* Contadores */}
+        {radarItems.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 16 }}>
+            {[
+              { l: 'Total', v: radarItems.length, c: 'var(--color-text-secondary)' },
+              { l: 'Pendentes', v: radarItems.filter(function(i) { return i.status === 'pendente'; }).length, c: 'var(--color-text-warning)' },
+              { l: 'Em andamento', v: radarItems.filter(function(i) { return i.status === 'em_andamento'; }).length, c: 'var(--color-text-info)' },
+              { l: 'Concluídos', v: radarItems.filter(function(i) { return i.status === 'concluido'; }).length, c: 'var(--color-text-success)' }
+            ].map(function(x, i) {
+              return (<div key={i} style={{ background: 'var(--color-background-secondary)', borderRadius: 'var(--border-radius-md)', padding: '8px 10px', textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 2 }}>{x.l}</div>
+                <div style={{ fontSize: 18, fontWeight: 500, color: x.c }}>{x.v}</div>
+              </div>);
+            })}
+          </div>
+        )}
+
+        {/* Lista */}
+        {radarLoading && <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-tertiary)' }}>Carregando...</div>}
+        {!radarLoading && radarItems.length === 0 && <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-tertiary)' }}>Nenhum direcionamento encontrado. Clique em "Extrair da súmula" após gerar uma súmula, ou em "Atualizar" para carregar existentes.</div>}
+        {!radarLoading && radarItems.map(function(item) {
+          var tipoCores = { deliberacao: { bg: '#eff6ff', text: '#1d4ed8', label: 'Deliberação' }, encaminhamento: { bg: '#fef3c7', text: '#92400e', label: 'Encaminhamento' }, compromisso: { bg: '#fce7f3', text: '#9d174d', label: 'Compromisso' }, risco: { bg: '#fef2f2', text: '#991b1b', label: 'Risco' } };
+          var statusCores = { pendente: { bg: '#fef3c7', text: '#92400e', label: 'Pendente' }, em_andamento: { bg: '#dbeafe', text: '#1e40af', label: 'Em andamento' }, concluido: { bg: '#dcfce7', text: '#166534', label: 'Concluído' } };
+          var tc = tipoCores[item.tipo] || tipoCores.encaminhamento;
+          var sc = statusCores[item.status] || statusCores.pendente;
+          var isExpanded = radarExpandedId === item.id;
+          var isEditing = radarEditId === item.id;
+
+          return (<div key={item.id} style={{ background: 'var(--color-background-secondary)', borderRadius: 'var(--border-radius-md)', padding: '12px 14px', marginBottom: 8, borderLeft: '3px solid ' + tc.text }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+              <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => setRadarExpandedId(isExpanded ? null : item.id)}>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: tc.bg, color: tc.text, fontWeight: 500 }}>{tc.label}</span>
+                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: sc.bg, color: sc.text, fontWeight: 500 }}>{sc.label}</span>
+                  {item.reuniao_origem && <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>• {item.reuniao_origem}</span>}
+                  {item.reuniao_data && <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>{item.reuniao_data}</span>}
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 500 }}>{item.titulo}</div>
+                {!isExpanded && item.responsavel && <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 2 }}>Resp: {item.responsavel}{item.prazo ? ' | Prazo: ' + item.prazo : ''}</div>}
+              </div>
+              <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                <select value={item.status} onChange={async (e) => {
+                  var newStatus = e.target.value;
+                  try {
+                    await fetch('/api/direcionamentos/' + item.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) });
+                    setRadarItems(radarItems.map(function(r) { return r.id === item.id ? { ...r, status: newStatus } : r; }));
+                  } catch(e2) { setError('Erro ao atualizar: ' + e2.message); }
+                }} style={{ fontSize: 11, padding: '3px 6px', borderRadius: 6 }}>
+                  <option value="pendente">Pendente</option>
+                  <option value="em_andamento">Em andamento</option>
+                  <option value="concluido">Concluído</option>
+                </select>
+                <button onClick={() => setRadarEditId(isEditing ? null : item.id)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-text-tertiary)', padding: 2 }}><Ic d={ic.edit} size={14} /></button>
+                <button onClick={async () => {
+                  if (!confirm('Excluir este direcionamento?')) return;
+                  try {
+                    await fetch('/api/direcionamentos/' + item.id, { method: 'DELETE' });
+                    setRadarItems(radarItems.filter(function(r) { return r.id !== item.id; }));
+                  } catch(e2) { setError('Erro ao excluir: ' + e2.message); }
+                }} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-text-danger)', padding: 2 }}><Ic d={ic.x} size={14} /></button>
+              </div>
+            </div>
+
+            {/* Expanded details */}
+            {isExpanded && !isEditing && (
+              <div style={{ marginTop: 10, paddingTop: 8, borderTop: '0.5px solid var(--color-border-tertiary)', fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
+                {item.descricao && <div style={{ marginBottom: 6 }}>{item.descricao}</div>}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, fontSize: 11 }}>
+                  {item.responsavel && <div><span style={{ fontWeight: 500 }}>Responsável:</span> {item.responsavel}</div>}
+                  {item.prazo && <div><span style={{ fontWeight: 500 }}>Prazo:</span> {item.prazo}</div>}
+                  {item.temas && <div style={{ gridColumn: '1 / -1' }}><span style={{ fontWeight: 500 }}>Temas:</span> {item.temas}</div>}
+                </div>
+              </div>
+            )}
+
+            {/* Edit form */}
+            {isEditing && (
+              <div style={{ marginTop: 10, paddingTop: 8, borderTop: '0.5px solid var(--color-border-tertiary)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                  <div><label style={{ fontSize: 11, color: 'var(--color-text-tertiary)', display: 'block', marginBottom: 2 }}>Título</label><input defaultValue={item.titulo} id={'radar-titulo-' + item.id} style={{ width: '100%', boxSizing: 'border-box', fontSize: 12 }} /></div>
+                  <div><label style={{ fontSize: 11, color: 'var(--color-text-tertiary)', display: 'block', marginBottom: 2 }}>Tipo</label><select defaultValue={item.tipo} id={'radar-tipo-' + item.id} style={{ width: '100%', boxSizing: 'border-box', fontSize: 12 }}><option value="deliberacao">Deliberação</option><option value="encaminhamento">Encaminhamento</option><option value="compromisso">Compromisso</option><option value="risco">Risco</option></select></div>
+                  <div><label style={{ fontSize: 11, color: 'var(--color-text-tertiary)', display: 'block', marginBottom: 2 }}>Responsável</label><input defaultValue={item.responsavel} id={'radar-resp-' + item.id} style={{ width: '100%', boxSizing: 'border-box', fontSize: 12 }} /></div>
+                  <div><label style={{ fontSize: 11, color: 'var(--color-text-tertiary)', display: 'block', marginBottom: 2 }}>Prazo</label><input defaultValue={item.prazo} id={'radar-prazo-' + item.id} style={{ width: '100%', boxSizing: 'border-box', fontSize: 12 }} /></div>
+                  <div style={{ gridColumn: '1 / -1' }}><label style={{ fontSize: 11, color: 'var(--color-text-tertiary)', display: 'block', marginBottom: 2 }}>Descrição</label><textarea defaultValue={item.descricao} id={'radar-desc-' + item.id} rows={3} style={{ width: '100%', boxSizing: 'border-box', fontSize: 12 }} /></div>
+                  <div style={{ gridColumn: '1 / -1' }}><label style={{ fontSize: 11, color: 'var(--color-text-tertiary)', display: 'block', marginBottom: 2 }}>Temas (separados por vírgula)</label><input defaultValue={item.temas} id={'radar-temas-' + item.id} style={{ width: '100%', boxSizing: 'border-box', fontSize: 12 }} /></div>
+                </div>
+                <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                  <button onClick={() => setRadarEditId(null)} style={{ fontSize: 11, padding: '4px 12px' }}>Cancelar</button>
+                  <button onClick={async () => {
+                    var updated = {
+                      titulo: document.getElementById('radar-titulo-' + item.id).value,
+                      tipo: document.getElementById('radar-tipo-' + item.id).value,
+                      responsavel: document.getElementById('radar-resp-' + item.id).value,
+                      prazo: document.getElementById('radar-prazo-' + item.id).value,
+                      descricao: document.getElementById('radar-desc-' + item.id).value,
+                      temas: document.getElementById('radar-temas-' + item.id).value
+                    };
+                    try {
+                      await fetch('/api/direcionamentos/' + item.id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updated) });
+                      setRadarItems(radarItems.map(function(r) { return r.id === item.id ? { ...r, ...updated } : r; }));
+                      setRadarEditId(null);
+                    } catch(e2) { setError('Erro ao salvar: ' + e2.message); }
+                  }} style={{ fontSize: 11, padding: '4px 12px', background: 'var(--color-background-info)', borderColor: 'var(--color-border-info)', color: 'var(--color-text-info)' }}>Salvar</button>
+                </div>
+              </div>
+            )}
           </div>);
         })}
       </div>)}
